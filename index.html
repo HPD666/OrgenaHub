@@ -191,6 +191,50 @@
       <textarea id="code" rows="6" placeholder="Paste your Orgena code here"></textarea>
       <button id="postBtn">Post Project</button>
     </div>
+<!-- continuation of the previous HTML -->
+<script type="module">
+import { getFirestore, collection, addDoc, doc, onSnapshot, updateDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+
+// Real-time star function
+async function starProject(id) {
+  if(!currentUser) return alert("Login first!");
+  const projectRef = doc(db, "projects", id);
+  await updateDoc(projectRef, { stars: arrayUnion(currentUser.displayName) });
+}
+
+// Real-time comment function
+async function addComment(id, text) {
+  if(!currentUser || !text) return;
+  const projectRef = doc(db, "projects", id);
+  await updateDoc(projectRef, { comments: arrayUnion({user: currentUser.displayName, text}) });
+}
+
+// Load projects with real-time stars/comments
+function loadProjects() {
+  const q = collection(db, "projects");
+  onSnapshot(q, snapshot => {
+    projectsContainer.innerHTML = '';
+    snapshot.forEach(docSnap => {
+      const project = docSnap.data();
+      const div = document.createElement('div');
+      div.className = "project";
+      div.innerHTML = `
+        <h3>${project.title} by ${project.user}</h3>
+        <pre class="code">${project.code}</pre>
+        <div class="stars">
+          <button class="star-btn" onclick="starProject('${docSnap.id}')">⭐ ${project.stars?.length || 0}</button>
+        </div>
+        <div class="comments">
+          ${project.comments?.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('') || ''}
+          ${currentUser ? `<input class="comment-input" id="comment-${docSnap.id}" placeholder="Add a comment">
+          <button class="comment-btn" onclick="addComment('${docSnap.id}', document.getElementById('comment-${docSnap.id}').value)">Comment</button>` : ''}
+        </div>
+      `;
+      projectsContainer.appendChild(div);
+    });
+  });
+}
+</script>
 
     <h2>All Projects</h2>
     <div id="projects"></div>
