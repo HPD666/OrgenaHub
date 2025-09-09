@@ -59,12 +59,12 @@ button{cursor:pointer;}
 </main>
 
 <script type="module">
-// Firebase imports
+// --- Firebase imports ---
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, onSnapshot, updateDoc, deleteDoc, arrayUnion, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
-// Firebase config (replace with your own if needed)
+// --- Firebase config ---
 const firebaseConfig = {
   apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
   authDomain: "orgenahub-7bca3.firebaseapp.com",
@@ -80,7 +80,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// DOM
+// --- DOM elements ---
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const postSection = document.getElementById('post-section');
@@ -110,7 +110,7 @@ logoutBtn.addEventListener('click', async () => {
   updateUI();
 });
 
-// Auth state
+// Listen for auth state changes
 onAuthStateChanged(auth, user => {
   currentUser = user;
   updateUI();
@@ -131,14 +131,20 @@ postBtn.addEventListener('click', async () => {
   const code = codeInput.value.trim();
   if(!title||!code)return alert("Fill both fields");
   await addDoc(collection(db,'projects'),{
-    title, code, user: currentUser.displayName, stars:[], comments:[], createdAt:serverTimestamp()
+    title,
+    code,
+    user: currentUser.displayName,
+    stars: [],
+    comments: [],
+    createdAt: serverTimestamp()
   });
-  titleInput.value=''; codeInput.value='';
+  titleInput.value='';
+  codeInput.value='';
 });
 
 // --- Star, comment, delete ---
 window.starProject = async (id, stars) => {
-  if(!currentUser)return alert("Login first");
+  if(!currentUser) return alert("Login first");
   if(stars?.includes(currentUser.displayName)) return;
   const projectRef = doc(db,'projects',id);
   await updateDoc(projectRef,{stars: arrayUnion(currentUser.displayName)});
