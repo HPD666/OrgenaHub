@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Orgena Share</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 900px;
+      margin: auto;
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    h1, h2 { text-align: center; }
+    input, textarea, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    button { cursor: pointer; background: #4CAF50; color: white; border: none; }
+    button:hover { background: #45a049; }
+    .project {
+      background: white;
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 5px;
+    }
+    .code {
+      background: #eee;
+      padding: 10px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      border-radius: 5px;
+    }
+    .stars, .comments { margin-top: 10px; }
+    .star-btn, .comment-btn { cursor: pointer; color: #ff9800; border: none; background: none; }
+    .comment-input { width: 80%; display: inline-block; }
+    .comment-btn { width: 18%; display: inline-block; }
+  </style>
+</head>
+<body>
+  <h1>Orgena Share</h1>
+
+  <div id="login-section">
+    <input id="username" placeholder="Enter username to sign in">
+    <button onclick="login()">Sign In</button>
+  </div>
+  <p id="currentUser" style="text-align:center; font-weight:bold;"></p>
+
+  <div id="post-section" style="display:none;">
+    <h2>Post Orgena Code</h2>
+    <input id="title" placeholder="Project title">
+    <textarea id="code" rows="6" placeholder="Paste your Orgena code here"></textarea>
+    <button onclick="postProject()">Post Project</button>
+  </div>
+
+  <h2>All Projects</h2>
+  <div id="projects"></div>
+
+  <script>
+    const API = "https://your-project-name.up.railway.app"; // <-- Replace with your Railway backend URL
+
+    let currentUser = null;
+    const projectsContainer = document.getElementById("projects");
+
+    async function login() {
+      const username = document.getElementById("username").value.trim();
+      if (!username) return alert("Enter a username!");
+      const res = await fetch(`${API}/signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username })
+      });
+      currentUser = await res.json();
+      document.getElementById("currentUser").innerText = `Signed in as: ${currentUser.username}`;
+      document.getElementById("post-section").style.display = "block";
+      loadProjects();
+    }
+
+    async function postProject() {
+      const title = document.getElementById("title").value.trim();
+      const code = document.getElementById("code").value.trim();
+      if (!title || !code) return alert("Title and code cannot be empty!");
+      await fetch(`${API}/project`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser._id, title, code })
+      });
+      document.getElementById("title").value = "";
+      document.getElementById("code").value = "";
+      loadProjects();
+    }
+
+    async function loadProjects() {
+      const res = await fetch(`${API}/projects`);
+      const projects = await res.json();
+      projectsContainer.innerHTML = "";
+      projects.reverse().forEach(p => {
+        const projectDiv = document.createElement("div");
+        projectDiv.className = "project";
+
+        const user = p.userId?.username || "Anon";
+        const stars = p.stars?.length || 0;
+        const comments = p.comments || [];
+
+        projectDiv.innerHTML = `
+          <h3>${p.title} by ${user}</h3>
+          <pre class="code">${p.code}</pre>
+          <div class="stars">
+            <button class="star-btn" onclick='starProject("${p._id}")'>⭐ ${stars}</button>
+          </div>
+          <div class="comments">
+            ${comments.map(c => `<p><b>${c.user}:</b> ${c.text}</p>`).join("")}
+            <input class="comment-input" id="comment-${p._id}" placeholder="Add a comment">
+            <button class="comment-btn" onclick='addComment("${p._id}")'>Comment</button>
+          </div>
+        `;
+        projectsContainer.appendChild(projectDiv);
+      });
+    }
+
+    async function starProject(projectId) {
+      await fetch(`${API}/projects/${projectId}/star`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: currentUser.username })
+      });
+      loadProjects();
+    }
+
+    async function addComment(projectId) {
+      const input = document.getElementById(`comment-${projectId}`);
+      const text = input.value.trim();
+      if (!text) return;
+      await fetch(`${API}/projects/${projectId}/comment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user: currentUser.username, text })
+      });
+      input.value = "";
+      loadProjects();
+    }
+
+    loadProjects();
+  </script>
+</body>
+</html>
