@@ -1,149 +1,205 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Orgena Share</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-      background: #f9f9f9;
-    }
-    h1, h2 { text-align: center; }
-    input, textarea, button {
-      padding: 10px;
-      margin: 5px 0;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    button { cursor: pointer; background: #4CAF50; color: white; border: none; }
-    button:hover { background: #45a049; }
-    .project {
-      background: white;
-      border: 1px solid #ddd;
-      padding: 15px;
-      margin: 15px 0;
-      border-radius: 5px;
-    }
-    .code {
-      background: #eee;
-      padding: 10px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      border-radius: 5px;
-    }
-    .stars, .comments { margin-top: 10px; }
-    .star-btn, .comment-btn { cursor: pointer; color: #ff9800; border: none; background: none; }
-    .comment-input { width: 80%; display: inline-block; }
-    .comment-btn { width: 18%; display: inline-block; }
-  </style>
+<meta charset="UTF-8">
+<title>Orgena Share</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body {
+  font-family: 'Roboto', sans-serif;
+  background: #f0f2f5;
+  margin: 0;
+  padding: 0;
+}
+header {
+  background: #4CAF50;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+main {
+  max-width: 900px;
+  margin: 20px auto;
+  padding: 0 10px;
+}
+input, textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 5px 0;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+button {
+  padding: 10px 20px;
+  margin-top: 5px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.3s;
+}
+button:hover { background: #45a049; }
+#projects .project {
+  background: white;
+  margin: 15px 0;
+  padding: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.project h3 { margin: 0 0 10px 0; color: #333; }
+.code {
+  background: #282c34;
+  color: #abb2bf;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: 'Courier New', monospace;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  margin-bottom: 10px;
+}
+.stars, .comments { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.star-btn { background: #ff9800; border: none; border-radius: 5px; color: white; font-weight: bold; padding: 5px 10px; cursor: pointer; }
+.star-btn:hover { background: #e68a00; }
+.comment-input { flex: 1; padding: 6px; border-radius: 5px; border: 1px solid #ccc; }
+.comment-btn { padding: 6px 12px; background: #2196F3; color: white; border-radius: 5px; border: none; cursor: pointer; }
+.comment-btn:hover { background: #1976D2; }
+@media(max-width:600px){
+  .stars, .comments { flex-direction: column; align-items: stretch; }
+  .comment-btn { width: 100%; margin-top: 5px; }
+}
+</style>
 </head>
 <body>
+<header>
   <h1>Orgena Share</h1>
-
-  <div id="login-section">
-    <input id="username" placeholder="Enter username to sign in">
-    <button onclick="login()">Sign In</button>
+  <p>Register/Login and share your Orgena code</p>
+</header>
+<main>
+  <!-- Authentication Section -->
+  <div id="auth-section">
+    <input id="username" placeholder="Username">
+    <input id="password" placeholder="Password" type="password">
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+    <button onclick="logout()" style="display:none;" id="logoutBtn">Logout</button>
   </div>
   <p id="currentUser" style="text-align:center; font-weight:bold;"></p>
 
+  <!-- Post Section -->
   <div id="post-section" style="display:none;">
-    <h2>Post Orgena Code</h2>
-    <input id="title" placeholder="Project title">
+    <h2>Post Your Orgena Code</h2>
+    <input id="title" placeholder="Project Title">
     <textarea id="code" rows="6" placeholder="Paste your Orgena code here"></textarea>
     <button onclick="postProject()">Post Project</button>
   </div>
 
+  <!-- Projects List -->
   <h2>All Projects</h2>
   <div id="projects"></div>
+</main>
 
-  <script>
-    const API = "https://your-project-name.up.railway.app"; // <-- Replace with your Railway backend URL
+<script>
+// ====== STORAGE ======
+let currentUser = null;
+let projects = [];
 
-    let currentUser = null;
-    const projectsContainer = document.getElementById("projects");
+// ====== UI ======
+function updateUI() {
+  if(currentUser) {
+    document.getElementById("post-section").style.display="block";
+    document.getElementById("logoutBtn").style.display="inline-block";
+    document.getElementById("auth-section").style.display="none";
+    document.getElementById("currentUser").innerText=`Logged in as: ${currentUser}`;
+  } else {
+    document.getElementById("post-section").style.display="none";
+    document.getElementById("logoutBtn").style.display="none";
+    document.getElementById("auth-section").style.display="block";
+    document.getElementById("currentUser").innerText="";
+  }
+}
 
-    async function login() {
-      const username = document.getElementById("username").value.trim();
-      if (!username) return alert("Enter a username!");
-      const res = await fetch(`${API}/signup`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username })
-      });
-      currentUser = await res.json();
-      document.getElementById("currentUser").innerText = `Signed in as: ${currentUser.username}`;
-      document.getElementById("post-section").style.display = "block";
-      loadProjects();
-    }
+// ====== AUTH FUNCTIONS (TO CONNECT TO BACKEND/FIREBASE) ======
+async function register(){
+  const username=document.getElementById("username").value.trim();
+  const password=document.getElementById("password").value;
+  if(!username||!password){alert("Fill username and password");return;}
+  // TODO: Replace with Firebase or API call
+  currentUser=username;
+  updateUI();
+  loadProjects();
+}
 
-    async function postProject() {
-      const title = document.getElementById("title").value.trim();
-      const code = document.getElementById("code").value.trim();
-      if (!title || !code) return alert("Title and code cannot be empty!");
-      await fetch(`${API}/project`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: currentUser._id, title, code })
-      });
-      document.getElementById("title").value = "";
-      document.getElementById("code").value = "";
-      loadProjects();
-    }
+async function login(){
+  const username=document.getElementById("username").value.trim();
+  const password=document.getElementById("password").value;
+  if(!username||!password){alert("Fill username and password");return;}
+  // TODO: Replace with Firebase or API call
+  currentUser=username;
+  updateUI();
+  loadProjects();
+}
 
-    async function loadProjects() {
-      const res = await fetch(`${API}/projects`);
-      const projects = await res.json();
-      projectsContainer.innerHTML = "";
-      projects.reverse().forEach(p => {
-        const projectDiv = document.createElement("div");
-        projectDiv.className = "project";
+function logout(){
+  currentUser=null;
+  updateUI();
+}
 
-        const user = p.userId?.username || "Anon";
-        const stars = p.stars?.length || 0;
-        const comments = p.comments || [];
+// ====== PROJECT FUNCTIONS ======
+function postProject(){
+  const title=document.getElementById("title").value.trim();
+  const code=document.getElementById("code").value.trim();
+  if(!title||!code){alert("Title and code required");return;}
+  projects.push({id:Date.now(), title, code, user: currentUser, stars:0, comments:[]});
+  document.getElementById("title").value="";
+  document.getElementById("code").value="";
+  loadProjects();
+}
 
-        projectDiv.innerHTML = `
-          <h3>${p.title} by ${user}</h3>
-          <pre class="code">${p.code}</pre>
-          <div class="stars">
-            <button class="star-btn" onclick='starProject("${p._id}")'>⭐ ${stars}</button>
-          </div>
-          <div class="comments">
-            ${comments.map(c => `<p><b>${c.user}:</b> ${c.text}</p>`).join("")}
-            <input class="comment-input" id="comment-${p._id}" placeholder="Add a comment">
-            <button class="comment-btn" onclick='addComment("${p._id}")'>Comment</button>
-          </div>
-        `;
-        projectsContainer.appendChild(projectDiv);
-      });
-    }
+function starProject(id){
+  const proj=projects.find(p=>p.id===id);
+  if(proj) proj.stars++;
+  loadProjects();
+}
 
-    async function starProject(projectId) {
-      await fetch(`${API}/projects/${projectId}/star`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: currentUser.username })
-      });
-      loadProjects();
-    }
+function addComment(id){
+  const input=document.getElementById(`comment-${id}`);
+  const text=input.value.trim();
+  if(!text)return;
+  const proj=projects.find(p=>p.id===id);
+  if(proj) proj.comments.push({user:currentUser,text});
+  input.value="";
+  loadProjects();
+}
 
-    async function addComment(projectId) {
-      const input = document.getElementById(`comment-${projectId}`);
-      const text = input.value.trim();
-      if (!text) return;
-      await fetch(`${API}/projects/${projectId}/comment`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user: currentUser.username, text })
-      });
-      input.value = "";
-      loadProjects();
-    }
+// ====== RENDER PROJECTS ======
+function loadProjects(){
+  const container=document.getElementById("projects");
+  container.innerHTML="";
+  projects.slice().reverse().forEach(p=>{
+    const div=document.createElement("div");
+    div.className="project";
+    div.innerHTML=`
+      <h3>${p.title} by ${p.user}</h3>
+      <pre class="code">${p.code}</pre>
+      <div class="stars">
+        <button class="star-btn" onclick='starProject(${p.id})'>⭐ ${p.stars}</button>
+      </div>
+      <div class="comments">
+        ${p.comments.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join("")}
+        ${currentUser?`<input class="comment-input" id="comment-${p.id}" placeholder="Add a comment">
+        <button class="comment-btn" onclick='addComment(${p.id})'>Comment</button>`:""}
+      </div>
+    `;
+    container.appendChild(div);
+  });
+}
 
-    loadProjects();
-  </script>
+// Initial UI
+updateUI();
+loadProjects();
+</script>
 </body>
 </html>
