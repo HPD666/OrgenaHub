@@ -32,7 +32,6 @@ main{max-width:1000px;margin:20px auto;padding:0 15px;}
 </style>
 </head>
 <body>
-
 <header>
 <h1>Orgena Hub</h1>
 <nav>
@@ -48,25 +47,24 @@ main{max-width:1000px;margin:20px auto;padding:0 15px;}
 <textarea id="code" rows="6" placeholder="Paste your Orgena code here"></textarea>
 <button id="postBtn">Post Project</button>
 </div>
-
 <h2>All Projects</h2>
 <div id="projects"></div>
 </main>
 
 <script type="module">
-// ===== Firebase setup =====
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, doc, onSnapshot, updateDoc, deleteDoc, arrayUnion, orderBy, query, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+// ===== Firebase =====
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, onSnapshot, updateDoc, deleteDoc, arrayUnion, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
 
+// Replace with your Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
-  authDomain: "orgenahub-7bca3.firebaseapp.com",
-  projectId: "orgenahub-7bca3",
-  storageBucket: "orgenahub-7bca3.app",
-  messagingSenderId: "807048048445",
-  appId: "1:807048048445:web:48a2e965eee533a40e5f54",
-  measurementId: "G-ZZRELPEM6J"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -75,87 +73,94 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // DOM
-const loginBtn=document.getElementById('loginBtn');
-const logoutBtn=document.getElementById('logoutBtn');
-const postSection=document.getElementById('post-section');
-const titleInput=document.getElementById('title');
-const codeInput=document.getElementById('code');
-const postBtn=document.getElementById('postBtn');
-const projectsContainer=document.getElementById('projects');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const postSection = document.getElementById('post-section');
+const titleInput = document.getElementById('title');
+const codeInput = document.getElementById('code');
+const postBtn = document.getElementById('postBtn');
+const projectsContainer = document.getElementById('projects');
 
-let currentUser=null;
+let currentUser = null;
 
 // ===== Auth =====
-loginBtn.addEventListener('click',async()=>{try{await signInWithPopup(auth,provider);}catch(e){console.error(e);}});
-logoutBtn.addEventListener('click',async()=>{await signOut(auth);});
+loginBtn.addEventListener('click', async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    currentUser = result.user;
+    updateUI();
+    loadProjects();
+  } catch(e) {
+    console.error("Login failed:", e.message);
+    alert("Login failed. Make sure your domain is authorized in Firebase.");
+  }
+});
+
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth);
+  currentUser = null;
+  updateUI();
+});
 
 // ===== Auth state =====
-onAuthStateChanged(auth,user=>{
-  currentUser=user;
+onAuthStateChanged(auth, user => {
+  currentUser = user;
   updateUI();
   if(user) loadProjects();
 });
 
-function updateUI(){
-  loginBtn.style.display=currentUser?'none':'inline-block';
-  logoutBtn.style.display=currentUser?'inline-block':'none';
-  postSection.style.display=currentUser?'block':'none';
+function updateUI() {
+  loginBtn.style.display = currentUser ? 'none' : 'inline-block';
+  logoutBtn.style.display = currentUser ? 'inline-block' : 'none';
+  postSection.style.display = currentUser ? 'block' : 'none';
 }
 
-// ===== Post project =====
-postBtn.addEventListener('click',async()=>{
-  const title=titleInput.value.trim();
-  const code=codeInput.value.trim();
-  if(!title||!code){alert("Fill both fields");return;}
-  try{
-    await addDoc(collection(db,'projects'),{
-      title,
-      code,
-      user:currentUser.displayName,
-      stars:[],
-      comments:[],
-      createdAt:serverTimestamp()
-    });
-    titleInput.value=''; codeInput.value='';
-  }catch(e){console.error(e);}
+// ===== Post =====
+postBtn.addEventListener('click', async () => {
+  const title = titleInput.value.trim();
+  const code = codeInput.value.trim();
+  if(!title || !code) return alert("Fill both fields");
+  await addDoc(collection(db,'projects'),{
+    title, code, user: currentUser.displayName, stars: [], comments: [], createdAt: serverTimestamp()
+  });
+  titleInput.value=''; codeInput.value='';
 });
 
-// ===== Stars & Comments =====
-window.starProject=async function(id,stars){
+// ===== Star, comment, delete =====
+window.starProject = async function(id, stars){
   if(!currentUser) return alert("Login first!");
-  if(stars?.includes(currentUser.displayName)) return; // prevent double star
-  const projectRef=doc(db,'projects',id);
-  await updateDoc(projectRef,{stars:arrayUnion(currentUser.displayName)});
+  if(stars?.includes(currentUser.displayName)) return;
+  const projectRef = doc(db,'projects',id);
+  await updateDoc(projectRef,{stars: arrayUnion(currentUser.displayName)});
 }
 
-window.addComment=async function(id,text){
+window.addComment = async function(id, text){
   if(!currentUser||!text) return;
-  const projectRef=doc(db,'projects',id);
-  await updateDoc(projectRef,{comments:arrayUnion({user:currentUser.displayName,text})});
+  const projectRef = doc(db,'projects',id);
+  await updateDoc(projectRef,{comments: arrayUnion({user: currentUser.displayName, text})});
 }
 
-// ===== Delete Project =====
-window.deleteProject=async function(id,user){
-  if(!currentUser||currentUser.displayName!==user){alert("Only owner can delete"); return;}
-  if(!confirm("Are you sure you want to delete this project?")) return;
+window.deleteProject = async function(id, user){
+  if(!currentUser||currentUser.displayName!==user) return alert("Only owner can delete");
+  if(!confirm("Delete this project?")) return;
   await deleteDoc(doc(db,'projects',id));
 }
 
 // ===== Load projects =====
 function loadProjects(){
-  const q=query(collection(db,'projects'),orderBy('createdAt','desc'));
-  onSnapshot(q,snapshot=>{
+  const q = query(collection(db,'projects'), orderBy('createdAt','desc'));
+  onSnapshot(q, snapshot => {
     projectsContainer.innerHTML='';
     snapshot.forEach(docSnap=>{
-      const p=docSnap.data();
-      const div=document.createElement('div');
+      const p = docSnap.data();
+      const div = document.createElement('div');
       div.className="project";
-      const highlighted=p.stars?.includes(currentUser?.displayName)?'highlight':'';
-      div.innerHTML=`
+      const highlight = p.stars?.includes(currentUser?.displayName)?'highlight':'';
+      div.innerHTML = `
         <h3>${p.title} by ${p.user}</h3>
         <pre class="code">${p.code}</pre>
         <div class="stars">
-          <button class="star-btn ${highlighted}" onclick="starProject('${docSnap.id}',${JSON.stringify(p.stars)})">⭐ ${p.stars?.length||0}</button>
+          <button class="star-btn ${highlight}" onclick="starProject('${docSnap.id}',${JSON.stringify(p.stars)})">⭐ ${p.stars?.length||0}</button>
         </div>
         <div class="comments">
           ${p.comments?.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('')||''}
