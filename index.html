@@ -59,20 +59,18 @@ button{cursor:pointer;}
 </main>
 
 <script type="module">
-// --- Firebase imports ---
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, onSnapshot, updateDoc, deleteDoc, arrayUnion, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// --- Firebase config ---
+// Firebase config (replace with your own)
 const firebaseConfig = {
-  apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
-  authDomain: "orgenahub-7bca3.firebaseapp.com",
-  projectId: "orgenahub-7bca3",
-  storageBucket: "orgenahub-7bca3.firebasestorage.app",
-  messagingSenderId: "807048048445",
-  appId: "1:807048048445:web:48a2e965eee533a40e5f54",
-  measurementId: "G-ZZRELPEM6J"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -80,7 +78,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// --- DOM elements ---
+// DOM
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const postSection = document.getElementById('post-section');
@@ -96,12 +94,12 @@ let currentUser = null;
 
 // --- Auth ---
 loginBtn.addEventListener('click', async () => {
-  try {
+  try{
     const result = await signInWithPopup(auth, provider);
     currentUser = result.user;
     updateUI();
     loadProjects();
-  } catch(e){ alert("Login failed: "+e.message); }
+  } catch(e){ alert("Login failed: "+e.message);}
 });
 
 logoutBtn.addEventListener('click', async () => {
@@ -110,23 +108,23 @@ logoutBtn.addEventListener('click', async () => {
   updateUI();
 });
 
-// Listen for auth state changes
-onAuthStateChanged(auth, user => {
-  currentUser = user;
+// Auth state
+onAuthStateChanged(auth,user=>{
+  currentUser=user;
   updateUI();
   if(user) loadProjects();
 });
 
 function updateUI(){
-  loginBtn.style.display = currentUser?'none':'inline-block';
-  logoutBtn.style.display = currentUser?'inline-block':'none';
-  postSection.style.display = currentUser?'block':'none';
-  profileSection.style.display = currentUser?'block':'none';
+  loginBtn.style.display=currentUser?'none':'inline-block';
+  logoutBtn.style.display=currentUser?'inline-block':'none';
+  postSection.style.display=currentUser?'block':'none';
+  profileSection.style.display=currentUser?'block':'none';
   if(currentUser) profileName.innerText = "Username: "+currentUser.displayName;
 }
 
 // --- Post project ---
-postBtn.addEventListener('click', async () => {
+postBtn.addEventListener('click', async ()=>{
   const title = titleInput.value.trim();
   const code = codeInput.value.trim();
   if(!title||!code)return alert("Fill both fields");
@@ -138,41 +136,40 @@ postBtn.addEventListener('click', async () => {
     comments: [],
     createdAt: serverTimestamp()
   });
-  titleInput.value='';
-  codeInput.value='';
+  titleInput.value=''; codeInput.value='';
 });
 
 // --- Star, comment, delete ---
-window.starProject = async (id, stars) => {
+window.starProject = async (id, stars)=>{
   if(!currentUser) return alert("Login first");
   if(stars?.includes(currentUser.displayName)) return;
   const projectRef = doc(db,'projects',id);
   await updateDoc(projectRef,{stars: arrayUnion(currentUser.displayName)});
 }
 
-window.addComment = async (id, text) => {
-  if(!currentUser||!text)return;
+window.addComment = async (id,text)=>{
+  if(!currentUser||!text) return;
   const projectRef = doc(db,'projects',id);
-  await updateDoc(projectRef,{comments: arrayUnion({user:currentUser.displayName,text})});
+  await updateDoc(projectRef,{comments: arrayUnion({user: currentUser.displayName,text})});
 }
 
-window.deleteProject = async (id,user) => {
-  if(!currentUser||currentUser.displayName!==user)return alert("Only owner can delete");
-  if(!confirm("Delete this project?"))return;
+window.deleteProject = async (id,user)=>{
+  if(!currentUser||currentUser.displayName!==user) return alert("Only owner can delete");
+  if(!confirm("Delete this project?")) return;
   await deleteDoc(doc(db,'projects',id));
 }
 
 // --- Load projects (real-time) ---
 function loadProjects(){
   const q = query(collection(db,'projects'), orderBy('createdAt','desc'));
-  onSnapshot(q, snapshot => {
-    projectsContainer.innerHTML = '';
-    userProjects.innerHTML = '';
+  onSnapshot(q, snapshot=>{
+    projectsContainer.innerHTML='';
+    userProjects.innerHTML='';
     snapshot.forEach(docSnap=>{
       const p = docSnap.data();
       const div = document.createElement('div'); div.className="project";
       const highlight = p.stars?.includes(currentUser?.displayName)?'highlight':'';
-      div.innerHTML = `
+      div.innerHTML=`
         <h3>${p.title} by ${p.user}</h3>
         <pre class="code">${p.code}</pre>
         <div class="stars">
@@ -186,10 +183,10 @@ function loadProjects(){
         ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`:''}
       `;
       projectsContainer.appendChild(div);
-
+      
       // Add to profile section
       if(currentUser && currentUser.displayName===p.user){
-        const ud=document.createElement('div'); ud.className="project";
+        const ud = document.createElement('div'); ud.className="project";
         ud.innerHTML=`<h4>${p.title}</h4><pre class="code">${p.code}</pre>
         <button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`;
         userProjects.appendChild(ud);
