@@ -57,3 +57,20 @@ app.get("/projects", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.post("/projects/:id/star", async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  if (!project.stars.includes(req.body.username)) {
+    project.stars.push(req.body.username);
+    await project.save();
+  }
+  res.json(project);
+});
+app.post("/projects/:id/comment", async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  project.comments.push({ user: req.body.user, text: req.body.text });
+  await project.save();
+  res.json(project);
+});
+
+
