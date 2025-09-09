@@ -7,11 +7,14 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// Connect to MongoDB Atlas
+// Connect to MongoDB Atlas using environment variable
+// Make sure to set MONGO_URI in Railway's Environment Variables
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
-});
+})
+.then(() => console.log("Connected to MongoDB Atlas"))
+.catch(err => console.error("MongoDB connection error:", err));
 
 // --- Schemas ---
 const User = mongoose.model("User", new mongoose.Schema({
@@ -28,12 +31,14 @@ const Project = mongoose.model("Project", new mongoose.Schema({
 }));
 
 // --- Routes ---
+// Signup
 app.post("/signup", async (req, res) => {
   const user = new User({ username: req.body.username });
   await user.save();
   res.json(user);
 });
 
+// Post a project
 app.post("/project", async (req, res) => {
   const project = new Project({
     userId: req.body.userId,
@@ -44,9 +49,11 @@ app.post("/project", async (req, res) => {
   res.json(project);
 });
 
+// Get all projects
 app.get("/projects", async (req, res) => {
   const projects = await Project.find().populate("userId");
   res.json(projects);
 });
 
-app.listen(process.env.PORT || 3000, () => console.log("Server running"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
