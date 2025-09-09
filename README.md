@@ -1,6 +1,6 @@
 # Orgena Hub
 
-Orgena Hub is an online social coding platform where developers can share, star, and comment on code projects in real-time. The platform provides a collaborative environment for coders to showcase their work, interact with others, and maintain a personal project profile.
+Orgena Hub is an online social coding platform where developers can share, star, and comment on code projects in real-time. This platform is made for people to make their orgena code in https://github.com/HPD666/Orgena (launch orgena workspace on web) and copy - paste the file here to the post and share. The platform provides a collaborative environment for coders to showcase their work, interact with others, and maintain a personal project profile.
 
 ---
 
