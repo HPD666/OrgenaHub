@@ -1,83 +1,86 @@
-# Orgena Hub
+# 🌟 Orgena Hub
 
- <img width="1024" height="1024" alt="image" src="https://github.com/user-attachments/assets/6e893e57-f994-4860-98d3-67ee05d970e1" />
+<p align="center">
+  <img width="300" src="https://github.com/user-attachments/assets/6e893e57-f994-4860-98d3-67ee05d970e1" alt="Orgena Hub Logo" />
+</p>
 
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/actions)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/releases)
+[![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
+[![Open Issues](https://img.shields.io/github/issues/HPD666/OrgenaHub?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/issues)
+[![Forks](https://img.shields.io/github/forks/HPD666/OrgenaHub?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/network/members)
 
+---
 
+## ✨ About Orgena Hub
 
+Orgena Hub is an **online social coding platform** where developers can **share, star, and comment** on code projects in real-time.  
 
-[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/HPD666/OrgenaHub/actions)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/HPD666/OrgenaHub/releases)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+- Build projects in [Orgena Workspace](https://github.com/HPD666/Orgena)
+- Share them instantly on Orgena Hub
+- Collaborate and interact with a **vibrant developer community**
 
-Orgena Hub is an **online social coding platform** where developers can share, star, and comment on code projects in real-time. Users can create their Orgena code in [Orgena Workspace](https://github.com/HPD666/Orgena), copy-paste it here, and share it with the community.  
-
-The platform provides a **collaborative environment** for coders to showcase their work, interact with others, and maintain a personal project profile.
+<p align="center">
+  <img src="https://github.com/HPD666/OrgenaHub/assets/demo.gif" alt="Orgena Hub Demo" width="600"/>
+</p>
 
 ---
 
 ## 🎯 Features
 
-- **Real-Time Code Sharing:** Post your projects and see them instantly appear for all users.
-- **Star System:** Like and endorse projects with live star count updates.
-- **Comments:** Discuss projects with other users in real-time.
-- **User Profiles:** View your own projects and track contributions.
-- **Google Authentication:** Secure sign-in with Google accounts.
-- **Responsive Design:** Works on desktop and mobile devices.
+- 🚀 **Real-Time Code Sharing** – See projects appear instantly.
+- ⭐ **Star System** – Like and endorse projects.
+- 💬 **Comments** – Discuss projects in real-time.
+- 👤 **User Profiles** – Track contributions and projects.
+- 🔒 **Google Authentication** – Secure login.
+- 📱 **Responsive Design** – Works on desktop & mobile.
 
 ---
 
 ## 🛠 Technology Stack
 
-- **Frontend:** HTML, CSS, JavaScript (ES6 Modules)
-- **Backend / Realtime Database:** Firebase Firestore
-- **Authentication:** Firebase Authentication (Google Sign-In)
-- **Hosting:** GitHub Pages or any static site hosting
+| Layer | Technology |
+|-------|------------|
+| Frontend | HTML, CSS, JavaScript (ES6 Modules) |
+| Backend / Database | Firebase Firestore |
+| Authentication | Firebase Auth (Google Sign-In) |
+| Hosting | GitHub Pages / Static Site Hosting |
 
 ---
 
-## 🚀 Demo
+## 🚀 Demo & Usage
 
-![Orgena Hub Demo](assets/demo.gif)
+- Live demo: [Orgena Hub](https://hpd666.github.io/OrgenaHub/)  
+- Code workspace: [Orgena Web](https://hpd666.github.io/Orgena-Web/)  
+- AI & Guide: [Orgena Code Guide](https://hpd666.github.io/OrgenaCode-Guide/)  
 
-Check out the live demo [here](https://hpd666.github.io/OrgenaHub/).
+**Quick Start:**  
+1. Register at the Orgena Hub.  
+2. Start coding on Orgena Web.  
+3. Share your code in Orgena Hub and get feedback!  
 
 ---
 
 ## 💻 Installation & Setup
 
-1. Clone the repository:
-
-`git clone https://github.com/HPD666/OrgenaHub.git
-cd OrgenaHub`
-
-2. Open `index.html` in your browser or host via GitHub Pages.
-   
-3. Configure Firebase for your project:
-Replace Firebase config in scripts/firebase-config.js with your own project credentials.
-Make sure Firestore rules are properly set for read/write access.
-
-## Easy way for usage
-1.Register at https://hpd666.github.io/OrgenaHub/
-2.Open https://hpd666.github.io/Orgena-Web/ and start coding. You can get guidance from the ai or here https://hpd666.github.io/OrgenaCode-Guide/
-3.Share your code in https://hpd666.github.io/OrgenaHub/
-More details at https://hpd666.github.io/Orgena/
-
-
-# 🤝 Contributing
-We welcome contributions!
+```bash
+git clone https://github.com/HPD666/OrgenaHub.git
+cd OrgenaHub `
+Open index.html in your browser or host via GitHub Pages.
+Configure Firebase in scripts/firebase-config.js with your project credentials.
+Ensure Firestore read/write rules are set properly.
+🤝 Contributing
+We ❤️ contributions!
 Fork the repo
-Create a feature branch (git checkout -b feature/YourFeature)
-Commit your changes (git commit -m "Add feature")
-Push to the branch (git push origin feature/YourFeature)
+Create a feature branch: git checkout -b feature/YourFeature
+Commit your changes: git commit -m "Add feature"
+Push to the branch: git push origin feature/YourFeature
 Open a pull request
-See CONTRIBUTING.md for more guidelines.
-
-
-# 📦 Releases & Changelog
+See CONTRIBUTING.md for details.
+📦 Releases & Changelog
 Check the Releases page for updates and changelogs.
-
-
-# 🏷 Tags / Topics
+🏷 Tags / Topics
 #SocialCoding #RealtimeCollaboration #OrgenaHub #OpenSource #WebApp
+<p align="center"> <img src="https://img.shields.io/badge/Let's%20Code-💻-blue?style=for-the-badge" /> <img src="https://img.shields.io/badge/Community-🤝-orange?style=for-the-badge" /> </p>
 Happy coding with Orgena Hub! 🚀
+
