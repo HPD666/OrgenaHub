@@ -8,9 +8,10 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Roboto',sans-serif;background:#f5f6fa;color:#333;}
-header{background:#1abc9c;color:white;padding:20px;display:flex;justify-content:space-between;align-items:center;}
-header h1{font-weight:700;}
-header nav button{margin-left:10px;padding:8px 15px;border:none;border-radius:5px;background:#16a085;color:white;font-weight:bold;cursor:pointer;transition:0.3s;}
+header{background:#1abc9c;color:white;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+header h1{font-weight:700;margin-bottom:5px;}
+header nav{display:flex;flex-wrap:wrap;}
+header nav button{margin:3px;padding:8px 15px;border:none;border-radius:5px;background:#16a085;color:white;font-weight:bold;cursor:pointer;transition:0.3s;}
 header nav button:hover{background:#149174;}
 main{max-width:1000px;margin:20px auto;padding:0 15px;}
 #projects{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
@@ -27,11 +28,23 @@ main{max-width:1000px;margin:20px auto;padding:0 15px;}
 .comment-btn:hover{background:#1f5f8b;}
 .delete-btn{padding:6px 12px;background:#c0392b;color:white;border:none;border-radius:5px;cursor:pointer;}
 .delete-btn:hover{background:#992d22;}
-#post-section{background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:20px;}
-.profile-section{background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:20px;}
+.edit-btn{padding:6px 12px;background:#3498db;color:white;border:none;border-radius:5px;cursor:pointer;}
+.edit-btn:hover{background:#217dbb;}
+#post-section, .profile-section{background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:20px;}
 input,textarea{width:100%;margin-bottom:10px;padding:8px;border-radius:5px;border:1px solid #ccc;}
 button{cursor:pointer;}
-@media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn{width:100%;margin-top:5px;}}
+.comment-actions{margin-left:auto;display:flex;gap:5px;}
+.comment{position:relative;background:#f0f0f0;padding:5px 10px;border-radius:5px;width:100%;display:flex;align-items:center;margin-bottom:3px;}
+.comment p{margin:0;flex:1;display:flex;align-items:center;}
+.comment p img{width:30px;height:30px;border-radius:50%;margin-right:8px;}
+.expand-btn{margin-bottom:5px;align-self:flex-start;}
+.profile-pic{width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;}
+body.dark{background-color:#1e1e1e;color:#f5f5f5;}
+body.dark header{background-color:#16a085;}
+body.dark .project{background-color:#2c2c2c;color:#f5f5f5;}
+body.dark .code{background-color:#333;color:#f5f5f5;}
+body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .edit-btn{opacity:0.85;}
+@media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn,.edit-btn{width:100%;margin-top:5px;}}
 </style>
 </head>
 <body>
@@ -40,50 +53,8 @@ button{cursor:pointer;}
 <nav>
 <button id="loginBtn">Login/Register</button>
 <button id="logoutBtn" style="display:none;">Logout</button>
-  <!-- Dark Mode Toggle Button -->
 <button id="darkModeBtn">Toggle Dark Mode</button>
 </nav>
-<script>
-// Dark mode toggle
-const darkModeBtn = document.getElementById('darkModeBtn');
-
-// Load saved theme
-const currentTheme = localStorage.getItem('theme');
-if (currentTheme === 'dark') document.body.classList.add('dark');
-
-// Toggle dark mode
-darkModeBtn.addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-  if (document.body.classList.contains('dark')) {
-    localStorage.setItem('theme', 'dark');
-  } else {
-    localStorage.setItem('theme', 'light');
-  }
-});
-</script>
-
-<style>
-/* Dark mode styles */
-body.dark {
-  background-color: #1e1e1e;
-  color: #f5f5f5;
-}
-body.dark header {
-  background-color: #16a085;
-}
-body.dark .project {
-  background-color: #2c2c2c;
-  color: #f5f5f5;
-}
-body.dark .code {
-  background-color: #333;
-  color: #f5f5f5;
-}
-body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn {
-  opacity: 0.85;
-}
-</style>
-
 </header>
 <main>
 <div id="post-section" style="display:none;">
@@ -103,20 +74,18 @@ body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase config (replace with your own)
 const firebaseConfig = {
   apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
   authDomain: "orgenahub-7bca3.firebaseapp.com",
   projectId: "orgenahub-7bca3",
-  storageBucket: "orgenahub-7bca3.firebasestorage.app",
+  storageBucket: "orgenahub-7bca3.appspot.com",
   messagingSenderId: "807048048445",
   appId: "1:807048048445:web:48a2e965eee533a40e5f54",
   measurementId: "G-ZZRELPEM6J"
 };
-
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -136,24 +105,34 @@ const profileName = document.getElementById('profileName');
 const userProjects = document.getElementById('userProjects');
 
 let currentUser = null;
+const defaultAvatar = 'https://www.gravatar.com/avatar/?d=mp&s=30';
+let lastPostTime = 0;
+let lastCommentTime = 0;
+
+// Dark mode
+const darkModeBtn = document.getElementById('darkModeBtn');
+if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
+darkModeBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('theme', document.body.classList.contains('dark')?'dark':'light');
+});
 
 // --- Auth ---
 loginBtn.addEventListener('click', async () => {
-  try{
+  try {
     const result = await signInWithPopup(auth, provider);
     currentUser = result.user;
     updateUI();
     loadProjects();
-  } catch(e){ alert("Login failed: "+e.message);}
+  } catch(e){alert("Login failed: "+e.message);}
 });
 
-logoutBtn.addEventListener('click', async () => {
+logoutBtn.addEventListener('click', async ()=>{
   await signOut(auth);
-  currentUser = null;
+  currentUser=null;
   updateUI();
 });
 
-// Auth state
 onAuthStateChanged(auth,user=>{
   currentUser=user;
   updateUI();
@@ -165,89 +144,131 @@ function updateUI(){
   logoutBtn.style.display=currentUser?'inline-block':'none';
   postSection.style.display=currentUser?'block':'none';
   profileSection.style.display=currentUser?'block':'none';
-  if(currentUser) profileName.innerText = "Username: "+currentUser.displayName;
+  if(currentUser){
+    const avatar = currentUser.photoURL || defaultAvatar;
+    profileName.innerHTML = `<img class="profile-pic" src="${avatar}"> ${currentUser.displayName}`;
+  }
 }
 
-// --- Post project ---
-postBtn.addEventListener('click', async ()=>{
-  const title = titleInput.value.trim();
-  const code = codeInput.value.trim();
-  if(!title||!code)return alert("Fill both fields");
-  await addDoc(collection(db,'projects'),{
-    title,
-    code,
-    user: currentUser.displayName,
-    stars: [],
-    comments: [],
-    createdAt: serverTimestamp()
-  });
+// --- Post Project ---
+postBtn.addEventListener('click', async () => {
+  if(!currentUser) return alert("Login first");
+  const now = Date.now();
+  if(now - lastPostTime < 5000) return alert("Wait 5s between posts.");
+  const title = titleInput.value.trim(), code = codeInput.value.trim();
+  if(!title || !code) return alert("Fill both fields");
+  await addDoc(collection(db,'projects'),{title, code, user: currentUser.displayName, stars: [], comments: [], createdAt: serverTimestamp()});
+  lastPostTime = now;
   titleInput.value=''; codeInput.value='';
 });
 
-// --- Star, comment, delete ---
-import { getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-window.starProject = async (id) => {
-  if (!currentUser) return alert("Login first");
-
-  const projectRef = doc(db, 'projects', id);
-  const projectSnap = await getDoc(projectRef);
-  const stars = projectSnap.data()?.stars || [];
-
-  if (stars.includes(currentUser.displayName)) return; // already starred
-
-  await updateDoc(projectRef, {
-    stars: arrayUnion(currentUser.displayName)
-  });
+// --- Star toggle ---
+window.toggleStar = async id => {
+  if(!currentUser) return alert("Login first");
+  const ref = doc(db,'projects',id);
+  const snap = await getDoc(ref);
+  const stars = snap.data()?.stars || [];
+  if(stars.includes(currentUser.displayName)) await updateDoc(ref,{stars: stars.filter(s=>s!==currentUser.displayName)});
+  else await updateDoc(ref,{stars: arrayUnion(currentUser.displayName)});
 };
 
+// --- Add comment ---
+window.addComment = async (id,inputElem)=>{
+  if(!currentUser) return;
+  const text = inputElem.value.trim(); if(!text) return;
+  const now = Date.now(); if(now - lastCommentTime < 3000) return alert("Wait 3s between comments.");
+  await updateDoc(doc(db,'projects',id),{comments: arrayUnion({user: currentUser.displayName, text, date: serverTimestamp()})});
+  lastCommentTime = now;
+  inputElem.value=''; inputElem.focus();
+};
 
+// --- Delete comment ---
+window.deleteComment = async (projectId, comment)=>{
+  if(!currentUser) return;
+  const projSnap = await getDoc(doc(db,'projects',projectId));
+  if(comment.user!==currentUser.displayName && projSnap.data()?.user!==currentUser.displayName) return alert("Only comment owner or post owner can delete.");
+  await updateDoc(doc(db,'projects',projectId),{comments: arrayRemove(comment)});
+};
 
-window.addComment = async (id,text)=>{
-  if(!currentUser||!text) return;
-  const projectRef = doc(db,'projects',id);
-  await updateDoc(projectRef,{comments: arrayUnion({user: currentUser.displayName,text})});
-}
+// --- Edit comment ---
+window.editComment = async (projectId, comment)=>{
+  if(comment.user!==currentUser.displayName) return alert("Only your comment can be edited.");
+  const newText = prompt("Edit comment:", comment.text); if(!newText) return;
+  await deleteComment(projectId, comment);
+  await updateDoc(doc(db,'projects',projectId),{comments: arrayUnion({...comment,text:newText})});
+};
 
+// --- Delete project ---
 window.deleteProject = async (id,user)=>{
-  if(!currentUser||currentUser.displayName!==user) return alert("Only owner can delete");
+  if(!currentUser || currentUser.displayName!==user) return alert("Only owner can delete");
   if(!confirm("Delete this project?")) return;
   await deleteDoc(doc(db,'projects',id));
-}
+};
 
-// --- Load projects (real-time) ---
+// --- Load projects ---
 function loadProjects(){
   const q = query(collection(db,'projects'), orderBy('createdAt','desc'));
   onSnapshot(q, snapshot=>{
-    projectsContainer.innerHTML='';
-    userProjects.innerHTML='';
+    projectsContainer.innerHTML=''; userProjects.innerHTML='';
     snapshot.forEach(docSnap=>{
       const p = docSnap.data();
       const div = document.createElement('div'); div.className="project";
-      const highlight = p.stars?.includes(currentUser?.displayName)?'highlight':'';
-      div.innerHTML=`
-        <h3>${p.title} by ${p.user}</h3>
-        <pre class="code">${p.code}</pre>
-        <div class="stars">
-          <button class="star-btn ${highlight}" onclick="starProject('${docSnap.id}')">⭐ ${p.stars?.length || 0}</button>
 
+      // Truncate code if long
+      let codePreview = p.code; let isTruncated=false;
+      if(p.code.length>130){codePreview = p.code.slice(0,130)+"..."; isTruncated=true;}
+
+      div.innerHTML = `
+        <h3>${p.title} by ${p.user}</h3>
+        <pre class="code" id="code-${docSnap.id}">${codePreview}</pre>
+        ${isTruncated?`<button class="expand-btn" data-id="${docSnap.id}">+ Expand</button>`:''}
+        <div class="stars">
+          <button class="star-btn ${p.stars?.includes(currentUser?.displayName)?'highlight':''}" data-id="${docSnap.id}">⭐ ${p.stars?.length||0}</button>
         </div>
-        <div class="comments">
-          ${p.comments?.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('')||''}
-          ${currentUser?`<input class="comment-input" id="comment-${docSnap.id}" placeholder="Add comment">
-          <button class="comment-btn" onclick="addComment('${docSnap.id}',document.getElementById('comment-${docSnap.id}').value)">Comment</button>`:''}
+        <div class="comments" id="comments-${docSnap.id}">
+          ${p.comments?.map(c=>`
+            <div class="comment">
+              <p><img src="${currentUser?.photoURL||defaultAvatar}">${c.user}: ${c.text}</p>
+              ${currentUser?`<div class="comment-actions">
+                ${c.user===currentUser.displayName||p.user===currentUser.displayName?`<button class="edit-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Edit</button>
+                <button class="delete-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Delete</button>`:''}
+              </div>`:''}
+            </div>`).join('')||''}
+          ${currentUser?`<input class="comment-input" placeholder="Add comment" id="comment-input-${docSnap.id}">
+          <button class="comment-btn" data-id="${docSnap.id}">Comment</button>`:''}
         </div>
-        ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`:''}
+        ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`:''}
       `;
       projectsContainer.appendChild(div);
-      
-      // Add to profile section
+
+      // Profile section projects
       if(currentUser && currentUser.displayName===p.user){
         const ud = document.createElement('div'); ud.className="project";
-        ud.innerHTML=`<h4>${p.title}</h4><pre class="code">${p.code}</pre>
-        <button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`;
+        ud.innerHTML = `<h4>${p.title}</h4><pre class="code">${p.code}</pre>
+        <button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`;
         userProjects.appendChild(ud);
       }
+    });
+
+    // Attach events
+    document.querySelectorAll('.expand-btn').forEach(btn=>{
+      btn.onclick = ()=>{
+        const pre = document.getElementById('code-'+btn.dataset.id);
+        const fullText = snapshot.docs.find(d=>d.id===btn.dataset.id).data().code;
+        pre.innerText = fullText; btn.style.display='none';
+      }
+    });
+    document.querySelectorAll('.star-btn').forEach(btn=>{
+      btn.onclick = ()=>toggleStar(btn.dataset.id);
+    });
+    document.querySelectorAll('.comment-btn').forEach(btn=>{
+      const inputElem = document.getElementById('comment-input-'+btn.dataset.id);
+      btn.onclick = ()=>addComment(btn.dataset.id,inputElem);
+    });
+    document.querySelectorAll('.edit-btn').forEach(btn=>btn.onclick = ()=>editComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text}));
+    document.querySelectorAll('.delete-btn').forEach(btn=>{
+      if(btn.innerText==="Delete Post") btn.onclick = ()=>deleteProject(btn.dataset.id,currentUser.displayName);
+      else btn.onclick = ()=>deleteComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text});
     });
   });
 }
