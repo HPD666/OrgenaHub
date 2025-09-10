@@ -1,16 +1,10 @@
 <!DOCTYPE html>
 <head>
-     <!-- Background note -->
+<!-- Background note -->
 <div id="registerNote" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
      font-size:40px; color:rgba(0,0,0,0.1); z-index:0;">
   Register first to view posts.
 </div>
-
-<script>
-  // Inside your existing updateUI() function, add this:
-  const registerNote = document.getElementById('registerNote');
-  registerNote.style.display = currentUser ? 'none' : 'block';
-</script>
 
   <style>
 html, body {
@@ -186,6 +180,24 @@ function updateUI(){
   if(currentUser){
     const avatar = currentUser.photoURL || defaultAvatar;
     profileName.innerHTML = `<img class="profile-pic" src="${avatar}"> ${currentUser.displayName}`;
+  // Add this INSIDE your existing updateUI() function
+  function updateUI() {
+    loginBtn.style.display = currentUser ? 'none' : 'inline-block';
+    logoutBtn.style.display = currentUser ? 'inline-block' : 'none';
+    postSection.style.display = currentUser ? 'block' : 'none';
+    profileSection.style.display = currentUser ? 'block' : 'none';
+
+    // --- Toggle background register note ---
+    const registerNote = document.getElementById('registerNote');
+    if (registerNote) {
+      registerNote.style.display = currentUser ? 'none' : 'block';
+    }
+
+    if (currentUser) {
+      const avatar = currentUser.photoURL || defaultAvatar;
+      profileName.innerHTML = `<img class="profile-pic" src="${avatar}"> ${currentUser.displayName}`;
+    }
+  }
   }
 }
 
