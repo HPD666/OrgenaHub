@@ -1,23 +1,4 @@
 <!DOCTYPE html>
-<head>
-  <style>
-html, body {
-  touch-action: manipulation;    /* prevents double-tap zoom & most gestures */
-  overscroll-behavior: none;     /* prevents scrolling from double-tap */
-  margin: 0;
-  padding: 0;
-}
-</style>
-
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-
-  <meta charset="UTF-8">
-  <title>Orgena Workspace</title>
-  <!-- Make it a standalone app -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="O Hub">
-  <link rel="icon" type="image/png" href="https://i.ibb.co/zTZNLnBq/IMG-0020.png"> <link rel="apple-touch-icon" href="https://i.ibb.co/zTZNLnBq/IMG-0020.png">
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -72,28 +53,12 @@ body.dark .code-copy-btn{background:rgba(0,0,0,0.6); color:#fff;}
 <header>
 <h1>Orgena Hub</h1>
 <nav>
-  <div class="login">
-  <button id="loginBtn">Login/Register</button>
-</div>
-
-<style>
-  .login {
-    position: relative; /* container positioning context */
-    width: 10%;
-    height: 10vh; /* full viewport height */
-  }
-
-  #loginBtn {
-    position: absolute; /* position relative to .login */
-    top: 0;             /* y = 0 */
-    left: 0;            /* x = 0 */
-  }
-</style>
-
+<button id="loginBtn">Login/Register</button>
 <button id="logoutBtn" style="display:none;">Logout</button>
 <button id="darkModeBtn">Toggle Dark Mode</button>
 </nav>
 </header>
+
 <main>
 <div id="post-section" style="display:none;">
 <h2>Post Your Code</h2>
