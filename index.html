@@ -110,7 +110,7 @@ let currentUser = null;
 let lastPostTime = 0;
 let lastCommentTime = 0;
 
-// --- Auth ---
+// Auth
 loginBtn.addEventListener('click', async () => {
   try{
     const result = await signInWithPopup(auth, provider);
@@ -143,7 +143,7 @@ function updateUI(){
   if(currentUser) profileName.innerText = "Username: "+currentUser.displayName;
 }
 
-// --- Post ---
+// Post
 postBtn.addEventListener('click', async ()=>{
   const now = Date.now();
   if(now - lastPostTime < 5000) return alert("Wait 5s between posts.");
@@ -157,7 +157,7 @@ postBtn.addEventListener('click', async ()=>{
   titleInput.value=''; codeInput.value='';
 });
 
-// --- Star ---
+// Stars
 window.toggleStar = async (id) => {
   if(!currentUser) return alert("Login first");
   const ref = doc(db,'projects',id);
@@ -168,7 +168,7 @@ window.toggleStar = async (id) => {
   } else { await updateDoc(ref,{stars:arrayUnion(currentUser.displayName)}); }
 };
 
-// --- Comments ---
+// Comments
 window.addComment = async (id, inputElem) => {
   if(!currentUser) return;
   const text = inputElem.value.trim();
@@ -195,14 +195,14 @@ window.editComment = async (projectId, comment) => {
   await updateDoc(doc(db,'projects',projectId), {comments: arrayUnion({...comment, text:newText})});
 };
 
-// --- Delete post ---
+// Delete post
 window.deleteProject = async (id,user)=>{
   if(!currentUser||currentUser.displayName!==user) return alert("Only owner can delete");
   if(!confirm("Delete this project?")) return;
   await deleteDoc(doc(db,'projects',id));
 };
 
-// --- Load projects ---
+// Load projects
 function loadProjects(){
   const q = query(collection(db,'projects'), orderBy('createdAt','desc'));
   onSnapshot(q, snapshot=>{
@@ -210,10 +210,7 @@ function loadProjects(){
     snapshot.forEach(docSnap=>{
       const p = docSnap.data();
       const div = document.createElement('div'); div.className="project";
-
-      // Code preview
-      let isTruncated = false;
-      let codePreview = p.code;
+      let isTruncated = false; let codePreview = p.code;
       if(p.code.length > 130){ codePreview = p.code.slice(0,130)+"..."; isTruncated=true; }
 
       div.innerHTML = `
