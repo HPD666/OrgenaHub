@@ -63,8 +63,8 @@ Orgena Hub is an **online social coding platform** where developers can **share,
 
 ## 💻 Installation & Setup
 
-```bash
-git clone https://github.com/HPD666/OrgenaHub.git
+
+`git clone https://github.com/HPD666/OrgenaHub.git
 cd OrgenaHub `
 Open index.html in your browser or host via GitHub Pages.
 Configure Firebase in scripts/firebase-config.js with your project credentials.
