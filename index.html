@@ -270,5 +270,110 @@ function loadProjects(){
   });
 }
 </script>
+  <!-- Copy-to-clipboard for code blocks -->
+<style>
+  /* copy button styling */
+  .code-copy-wrapper { position: relative; }
+  .code-copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    padding: 6px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: rgba(255,255,255,0.95);
+    cursor: pointer;
+    user-select: none;
+    z-index: 5;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  /* dark mode support if your site toggles dark class on body */
+  body.dark .code-copy-btn {
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border-color: rgba(255,255,255,0.06);
+  }
+  .code-copy-btn.copied {
+    transform: translateY(-1px);
+    opacity: 0.9;
+  }
+
+  /* ensure code blocks have room for the button */
+  pre { position: relative; padding-top: 2.4rem; overflow: auto; }
+</style>
+
+<script>
+(function () {
+  // Call to initialize injection
+  function initCopyButtons() {
+    // Select all pre > code blocks
+    const codeBlocks = document.querySelectorAll('pre > code');
+
+    codeBlocks.forEach(code => {
+      const pre = code.parentElement;
+      // ensure wrapper class for styling
+      pre.classList.add('code-copy-wrapper');
+
+      // avoid adding multiple buttons
+      if (pre.querySelector('.code-copy-btn')) return;
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'code-copy-btn';
+      btn.textContent = 'Copy';
+
+      // Click handler
+      btn.addEventListener('click', async () => {
+        const text = code.innerText.replace(/\r\n/g, '\n'); // normalize line endings
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+          } else {
+            // fallback for older browsers
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+          }
+
+          // feedback
+          btn.textContent = 'Copied!';
+          btn.classList.add('copied');
+          setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.classList.remove('copied');
+          }, 1400);
+
+        } catch (err) {
+          console.error('Copy failed', err);
+          btn.textContent = 'Error';
+          setTimeout(() => btn.textContent = 'Copy', 1400);
+        }
+      });
+
+      // optional: copy on double-click of the code area
+      code.addEventListener('dblclick', () => btn.click());
+
+      pre.appendChild(btn);
+    });
+  }
+
+  // Run on DOM ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCopyButtons);
+  } else {
+    initCopyButtons();
+  }
+
+  // If your site dynamically loads code blocks (AJAX), expose the initializer:
+  window.Orgena_initCopyButtons = initCopyButtons;
+})();
+</script>
+
 </body>
 </html>
