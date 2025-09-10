@@ -66,6 +66,7 @@ body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .e
 <div class="profile-section" id="profile-section" style="display:none;">
 <h2>Your Profile</h2>
 <div id="profileName"></div>
+<button id="editUsernameBtn" style="margin-top:5px;">Edit Username</button>
 <div id="userProjects"></div>
 </div>
 <h2>All Projects</h2>
@@ -75,7 +76,7 @@ body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .e
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp, getDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
@@ -92,7 +93,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// DOM
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const postSection = document.getElementById('post-section');
@@ -103,13 +103,11 @@ const projectsContainer = document.getElementById('projects');
 const profileSection = document.getElementById('profile-section');
 const profileName = document.getElementById('profileName');
 const userProjects = document.getElementById('userProjects');
+const editUsernameBtn = document.getElementById('editUsernameBtn');
 
 let currentUser = null;
 const defaultAvatar = 'https://www.gravatar.com/avatar/?d=mp&s=30';
-let lastPostTime = 0;
-let lastCommentTime = 0;
 
-// Dark mode
 const darkModeBtn = document.getElementById('darkModeBtn');
 if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
 darkModeBtn.addEventListener('click', () => {
@@ -150,15 +148,41 @@ function updateUI(){
   }
 }
 
+// --- Edit Username ---
+editUsernameBtn.onclick = async ()=>{
+  if(!currentUser) return;
+  const newName = prompt("Enter new username:", currentUser.displayName);
+  if(!newName) return;
+  await updateProfile(currentUser,{displayName:newName});
+  currentUser = auth.currentUser;
+  updateUI();
+
+  // Update all projects
+  const projSnap = await getDocs(collection(db,'projects'));
+  for(const docSnap of projSnap.docs){
+    if(docSnap.data().user===currentUser.displayName) continue;
+    if(docSnap.data().user===currentUser.displayName) await updateDoc(doc(db,'projects',docSnap.id),{user:newName});
+  }
+
+  // Update all comments
+  for(const docSnap of projSnap.docs){
+    const comments = docSnap.data().comments || [];
+    let updated = false;
+    const newComments = comments.map(c=>{
+      if(c.user===currentUser.displayName){updated=true; return {...c,user:newName};} else return c;
+    });
+    if(updated) await updateDoc(doc(db,'projects',docSnap.id),{comments:newComments});
+  }
+
+  loadProjects();
+};
+
 // --- Post Project ---
 postBtn.addEventListener('click', async () => {
   if(!currentUser) return alert("Login first");
-  const now = Date.now();
-  if(now - lastPostTime < 5000) return alert("Wait 5s between posts.");
   const title = titleInput.value.trim(), code = codeInput.value.trim();
   if(!title || !code) return alert("Fill both fields");
   await addDoc(collection(db,'projects'),{title, code, user: currentUser.displayName, stars: [], comments: [], createdAt: serverTimestamp()});
-  lastPostTime = now;
   titleInput.value=''; codeInput.value='';
 });
 
@@ -176,9 +200,7 @@ window.toggleStar = async id => {
 window.addComment = async (id,inputElem)=>{
   if(!currentUser) return;
   const text = inputElem.value.trim(); if(!text) return;
-  const now = Date.now(); if(now - lastCommentTime < 3000) return alert("Wait 3s between comments.");
   await updateDoc(doc(db,'projects',id),{comments: arrayUnion({user: currentUser.displayName, text, date: serverTimestamp()})});
-  lastCommentTime = now;
   inputElem.value=''; inputElem.focus();
 };
 
@@ -188,14 +210,6 @@ window.deleteComment = async (projectId, comment)=>{
   const projSnap = await getDoc(doc(db,'projects',projectId));
   if(comment.user!==currentUser.displayName && projSnap.data()?.user!==currentUser.displayName) return alert("Only comment owner or post owner can delete.");
   await updateDoc(doc(db,'projects',projectId),{comments: arrayRemove(comment)});
-};
-
-// --- Edit comment ---
-window.editComment = async (projectId, comment)=>{
-  if(comment.user!==currentUser.displayName) return alert("Only your comment can be edited.");
-  const newText = prompt("Edit comment:", comment.text); if(!newText) return;
-  await deleteComment(projectId, comment);
-  await updateDoc(doc(db,'projects',projectId),{comments: arrayUnion({...comment,text:newText})});
 };
 
 // --- Delete project ---
@@ -214,9 +228,8 @@ function loadProjects(){
       const p = docSnap.data();
       const div = document.createElement('div'); div.className="project";
 
-      // Truncate code if long
       let codePreview = p.code; let isTruncated=false;
-      if(p.code.length>130){codePreview = p.code.slice(0,130)+"..."; isTruncated=true;}
+      if(p.code.length>130){codePreview=p.code.slice(0,130)+"..."; isTruncated=true;}
 
       div.innerHTML = `
         <h3>${p.title} by ${p.user}</h3>
@@ -241,7 +254,6 @@ function loadProjects(){
       `;
       projectsContainer.appendChild(div);
 
-      // Profile section projects
       if(currentUser && currentUser.displayName===p.user){
         const ud = document.createElement('div'); ud.className="project";
         ud.innerHTML = `<h4>${p.title}</h4><pre class="code">${p.code}</pre>
@@ -250,17 +262,11 @@ function loadProjects(){
       }
     });
 
-    // Attach events
+    // Events
     document.querySelectorAll('.expand-btn').forEach(btn=>{
-      btn.onclick = ()=>{
-        const pre = document.getElementById('code-'+btn.dataset.id);
-        const fullText = snapshot.docs.find(d=>d.id===btn.dataset.id).data().code;
-        pre.innerText = fullText; btn.style.display='none';
-      }
+      btn.onclick = ()=>{document.getElementById('code-'+btn.dataset.id).innerText=snapshot.docs.find(d=>d.id===btn.dataset.id).data().code; btn.style.display='none';}
     });
-    document.querySelectorAll('.star-btn').forEach(btn=>{
-      btn.onclick = ()=>toggleStar(btn.dataset.id);
-    });
+    document.querySelectorAll('.star-btn').forEach(btn=>btn.onclick = ()=>toggleStar(btn.dataset.id));
     document.querySelectorAll('.comment-btn').forEach(btn=>{
       const inputElem = document.getElementById('comment-input-'+btn.dataset.id);
       btn.onclick = ()=>addComment(btn.dataset.id,inputElem);
