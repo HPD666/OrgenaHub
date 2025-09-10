@@ -196,17 +196,15 @@ window.editComment = async (projectId, commentId)=>{
 
 window.deleteProject = async (id,user)=>{if(!currentUser||currentUser.displayName!==user)return alert("Only owner can delete"); if(!confirm("Delete this project?")) return; await deleteDoc(doc(db,'projects',id));};
 
-// --- Copy Button Helper (Copy FULL code from Firestore) ---
-async function createCopyButton(pre, docId){
+// --- Copy Button Helper ---
+function createCopyButton(pre){
   const btn = document.createElement('button');
   btn.className='code-copy-btn';
   btn.textContent='Copy';
   pre.appendChild(btn);
   btn.addEventListener('click', async ()=>{
     try {
-      const snap = await getDoc(doc(db,'projects',docId));
-      const fullCode = snap.data()?.code || '';
-      await navigator.clipboard.writeText(fullCode);
+      await navigator.clipboard.writeText(pre.textContent);
       btn.textContent='Copied!';
       btn.classList.add('copied');
       setTimeout(()=>{btn.textContent='Copy'; btn.classList.remove('copied');},1200);
@@ -246,14 +244,14 @@ function loadProjects(){
       `;
       projectsContainer.appendChild(div);
       const pre = div.querySelector('pre.code');
-      createCopyButton(pre, docSnap.id);
+      createCopyButton(pre);
 
       if(currentUser && currentUser.displayName===p.user){
         const ud=document.createElement('div'); ud.className="project";
         ud.innerHTML=`<h4>${p.title}</h4><pre class="code">${p.code}</pre>
         <button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`;
         const preUD = ud.querySelector('pre.code');
-        createCopyButton(preUD, docSnap.id);
+        createCopyButton(preUD);
         userProjects.appendChild(ud);
       }
     });
@@ -262,6 +260,7 @@ function loadProjects(){
       const pre = document.getElementById('code-'+btn.dataset.id);
       pre.textContent = snapshot.docs.find(d=>d.id===btn.dataset.id).data().code;
       btn.style.display='none';
+      if(!pre.querySelector('.code-copy-btn')) createCopyButton(pre);
     });
     document.querySelectorAll('.star-btn').forEach(btn=>btn.onclick=()=>toggleStar(btn.dataset.id));
     document.querySelectorAll('.comment-btn').forEach(btn=>{const inputElem=document.getElementById('comment-input-'+btn.dataset.id); btn.onclick=()=>addComment(btn.dataset.id,inputElem);});
