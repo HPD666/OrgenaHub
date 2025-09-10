@@ -187,10 +187,22 @@ postBtn.addEventListener('click', async ()=>{
 // --- Star, comment, delete ---
 window.starProject = async (id, stars)=>{
   if(!currentUser) return alert("Login first");
-  if(stars?.includes(currentUser.displayName)) return;
+
   const projectRef = doc(db,'projects',id);
-  await updateDoc(projectRef,{stars: arrayUnion(currentUser.displayName)});
+  const userId = currentUser.uid; // use UID instead of displayName for uniqueness
+
+  // Check if already starred
+  const hasStarred = stars?.includes(userId);
+
+  if(hasStarred){
+    // remove star
+    await updateDoc(projectRef, { stars: stars.filter(s => s !== userId) });
+  } else {
+    // add star
+    await updateDoc(projectRef, { stars: [...stars, userId] });
+  }
 }
+
 
 window.addComment = async (id,text)=>{
   if(!currentUser||!text) return;
