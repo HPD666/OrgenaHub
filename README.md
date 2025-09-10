@@ -1,6 +1,6 @@
 # Orgena Hub
 
-https://i.ibb.co/W4Swn2mD/IMG-0015.jpg![image](https://github.com/user-attachments/assets/4a4259dd-095c-4daf-b6c8-70336d17d360)
+<img src="https://i.ibb.co/W4Swn2mD/IMG-0015.jpg">
 
 
 
