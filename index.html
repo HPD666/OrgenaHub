@@ -8,16 +8,17 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Roboto',sans-serif;background:#f5f6fa;color:#333;}
-header{background:#1abc9c;color:white;padding:20px;display:flex;justify-content:space-between;align-items:center;}
-header h1{font-weight:700;}
-header nav button{margin-left:10px;padding:8px 15px;border:none;border-radius:5px;background:#16a085;color:white;font-weight:bold;cursor:pointer;transition:0.3s;}
+header{background:#1abc9c;color:white;padding:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+header h1{font-weight:700;margin-bottom:5px;}
+header nav{display:flex;flex-wrap:wrap;}
+header nav button{margin:3px;padding:8px 15px;border:none;border-radius:5px;background:#16a085;color:white;font-weight:bold;cursor:pointer;transition:0.3s;}
 header nav button:hover{background:#149174;}
 main{max-width:1000px;margin:20px auto;padding:0 15px;}
 #projects{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;}
 .project{background:white;border-radius:10px;box-shadow:0 3px 8px rgba(0,0,0,0.1);padding:15px;display:flex;flex-direction:column;transition:0.3s;}
 .project:hover{transform:translateY(-3px);}
 .project h3{margin-bottom:10px;color:#1abc9c;}
-.code{background:#2c3e50;color:#ecf0f1;padding:10px;border-radius:8px;font-family:'Courier New',monospace;white-space:pre-wrap;overflow-x:auto;margin-bottom:10px;}
+.code{background:#2c3e50;color:#ecf0f1;padding:10px;border-radius:8px;font-family:'Courier New',monospace;white-space:pre-wrap;overflow-x:auto;margin-bottom:10px;max-height:200px;overflow-y:auto;}
 .stars,.comments{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:5px;}
 .star-btn{background:#e67e22;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:bold;transition:0.2s;}
 .star-btn.highlight{background:#f1c40f;}
@@ -27,11 +28,24 @@ main{max-width:1000px;margin:20px auto;padding:0 15px;}
 .comment-btn:hover{background:#1f5f8b;}
 .delete-btn{padding:6px 12px;background:#c0392b;color:white;border:none;border-radius:5px;cursor:pointer;}
 .delete-btn:hover{background:#992d22;}
-#post-section{background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:20px;}
-.profile-section{background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:20px;}
+.edit-btn{padding:6px 12px;background:#3498db;color:white;border:none;border-radius:5px;cursor:pointer;}
+.edit-btn:hover{background:#217dbb;}
+#post-section, .profile-section{background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:20px;}
 input,textarea{width:100%;margin-bottom:10px;padding:8px;border-radius:5px;border:1px solid #ccc;}
 button{cursor:pointer;}
-@media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn{width:100%;margin-top:5px;}}
+.comment-actions{margin-left:auto;display:flex;gap:5px;}
+.comment{position:relative;background:#f0f0f0;padding:5px 10px;border-radius:5px;width:100%;display:flex;align-items:center;margin-bottom:3px;}
+.comment p{margin:0;flex:1;}
+.comment-options{cursor:pointer;margin-left:5px;font-weight:bold;color:#555;}
+.comment-options:hover{color:#000;}
+.expand-btn{margin-bottom:5px;align-self:flex-start;}
+/* Dark mode styles */
+body.dark{background-color:#1e1e1e;color:#f5f5f5;}
+body.dark header{background-color:#16a085;}
+body.dark .project{background-color:#2c2c2c;color:#f5f5f5;}
+body.dark .code{background-color:#333;color:#f5f5f5;}
+body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .edit-btn{opacity:0.85;}
+@media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn,.edit-btn{width:100%;margin-top:5px;}}
 </style>
 </head>
 <body>
@@ -40,50 +54,9 @@ button{cursor:pointer;}
 <nav>
 <button id="loginBtn">Login/Register</button>
 <button id="logoutBtn" style="display:none;">Logout</button>
-  <!-- Dark Mode Toggle Button -->
+<button id="changeUsernameBtn" style="display:none;">Change Username</button>
 <button id="darkModeBtn">Toggle Dark Mode</button>
 </nav>
-<script>
-// Dark mode toggle
-const darkModeBtn = document.getElementById('darkModeBtn');
-
-// Load saved theme
-const currentTheme = localStorage.getItem('theme');
-if (currentTheme === 'dark') document.body.classList.add('dark');
-
-// Toggle dark mode
-darkModeBtn.addEventListener('click', () => {
-  document.body.classList.toggle('dark');
-  if (document.body.classList.contains('dark')) {
-    localStorage.setItem('theme', 'dark');
-  } else {
-    localStorage.setItem('theme', 'light');
-  }
-});
-</script>
-
-<style>
-/* Dark mode styles */
-body.dark {
-  background-color: #1e1e1e;
-  color: #f5f5f5;
-}
-body.dark header {
-  background-color: #16a085;
-}
-body.dark .project {
-  background-color: #2c2c2c;
-  color: #f5f5f5;
-}
-body.dark .code {
-  background-color: #333;
-  color: #f5f5f5;
-}
-body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn {
-  opacity: 0.85;
-}
-</style>
-
 </header>
 <main>
 <div id="post-section" style="display:none;">
@@ -103,20 +76,10 @@ body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase config (replace with your own)
-const firebaseConfig = {
-  apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
-  authDomain: "orgenahub-7bca3.firebaseapp.com",
-  projectId: "orgenahub-7bca3",
-  storageBucket: "orgenahub-7bca3.firebasestorage.app",
-  messagingSenderId: "807048048445",
-  appId: "1:807048048445:web:48a2e965eee533a40e5f54",
-  measurementId: "G-ZZRELPEM6J"
-};
-
+const firebaseConfig = {apiKey:"AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",authDomain:"orgenahub-7bca3.firebaseapp.com",projectId:"orgenahub-7bca3",storageBucket:"orgenahub-7bca3.firebasestorage.app",messagingSenderId:"807048048445",appId:"1:807048048445:web:48a2e965eee533a40e5f54",measurementId:"G-ZZRELPEM6J"};
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -124,133 +87,193 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // DOM
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const postSection = document.getElementById('post-section');
-const titleInput = document.getElementById('title');
-const codeInput = document.getElementById('code');
-const postBtn = document.getElementById('postBtn');
-const projectsContainer = document.getElementById('projects');
-const profileSection = document.getElementById('profile-section');
-const profileName = document.getElementById('profileName');
-const userProjects = document.getElementById('userProjects');
+const loginBtn=document.getElementById('loginBtn');
+const logoutBtn=document.getElementById('logoutBtn');
+const changeUsernameBtn=document.getElementById('changeUsernameBtn');
+const postSection=document.getElementById('post-section');
+const titleInput=document.getElementById('title');
+const codeInput=document.getElementById('code');
+const postBtn=document.getElementById('postBtn');
+const projectsContainer=document.getElementById('projects');
+const profileSection=document.getElementById('profile-section');
+const profileName=document.getElementById('profileName');
+const userProjects=document.getElementById('userProjects');
 
-let currentUser = null;
+let currentUser=null;
+let lastPostTime=0;
+let lastCommentTime=0;
 
 // --- Auth ---
-loginBtn.addEventListener('click', async () => {
-  try{
-    const result = await signInWithPopup(auth, provider);
-    currentUser = result.user;
-    updateUI();
-    loadProjects();
-  } catch(e){ alert("Login failed: "+e.message);}
+loginBtn.addEventListener('click', async ()=>{
+  try{const result=await signInWithPopup(auth,provider);currentUser=result.user;updateUI();loadProjects();}
+  catch(e){alert("Login failed: "+e.message);}
 });
-
-logoutBtn.addEventListener('click', async () => {
-  await signOut(auth);
-  currentUser = null;
-  updateUI();
+logoutBtn.addEventListener('click', async ()=>{
+  await signOut(auth);currentUser=null;updateUI();
 });
-
-// Auth state
-onAuthStateChanged(auth,user=>{
-  currentUser=user;
-  updateUI();
-  if(user) loadProjects();
+changeUsernameBtn.addEventListener('click', async ()=>{
+  const newName=prompt("Enter new username:",currentUser.displayName);
+  if(newName && newName.trim()!==currentUser.displayName){
+    await updateProfile(currentUser,{displayName:newName});
+    currentUser.displayName=newName;updateUI();alert("Username updated!");
+  }
 });
-
+onAuthStateChanged(auth,user=>{currentUser=user;updateUI();if(user) loadProjects();});
 function updateUI(){
   loginBtn.style.display=currentUser?'none':'inline-block';
   logoutBtn.style.display=currentUser?'inline-block':'none';
+  changeUsernameBtn.style.display=currentUser?'inline-block':'none';
   postSection.style.display=currentUser?'block':'none';
   profileSection.style.display=currentUser?'block':'none';
-  if(currentUser) profileName.innerText = "Username: "+currentUser.displayName;
+  if(currentUser) profileName.innerText="Username: "+currentUser.displayName;
 }
 
 // --- Post project ---
 postBtn.addEventListener('click', async ()=>{
+  const now = Date.now();
+  if(now-lastPostTime<5000) return alert("Wait 5s between posts.");
   const title = titleInput.value.trim();
   const code = codeInput.value.trim();
   if(!title||!code)return alert("Fill both fields");
-  await addDoc(collection(db,'projects'),{
-    title,
-    code,
-    user: currentUser.displayName,
-    stars: [],
-    comments: [],
-    createdAt: serverTimestamp()
-  });
+  await addDoc(collection(db,'projects'),{title,code,user:currentUser.displayName,stars:[],comments:[],createdAt:serverTimestamp()});
+  lastPostTime=now;
   titleInput.value=''; codeInput.value='';
 });
 
-// --- Star, comment, delete ---
-import { getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
-
-window.starProject = async (id) => {
-  if (!currentUser) return alert("Login first");
-
-  const projectRef = doc(db, 'projects', id);
-  const projectSnap = await getDoc(projectRef);
-  const stars = projectSnap.data()?.stars || [];
-
-  if (stars.includes(currentUser.displayName)) return; // already starred
-
-  await updateDoc(projectRef, {
-    stars: arrayUnion(currentUser.displayName)
-  });
+// --- Star/unstar ---
+window.toggleStar=async(id)=>{
+  if(!currentUser) return alert("Login first");
+  const ref=doc(db,'projects',id);
+  const snap=await getDoc(ref);
+  const stars=snap.data()?.stars||[];
+  if(stars.includes(currentUser.displayName)){
+    await updateDoc(ref,{stars:stars.filter(s=>s!==currentUser.displayName)});
+  } else {
+    await updateDoc(ref,{stars:arrayUnion(currentUser.displayName)});
+  }
 };
 
-
-
-window.addComment = async (id,text)=>{
+// --- Comments ---
+window.addComment=async(id,text)=>{
   if(!currentUser||!text) return;
-  const projectRef = doc(db,'projects',id);
-  await updateDoc(projectRef,{comments: arrayUnion({user: currentUser.displayName,text})});
-}
+  const now = Date.now();
+  if(now-lastCommentTime<3000) return alert("Wait 3s between comments.");
+  const ref=doc(db,'projects',id);
+  await updateDoc(ref,{comments:arrayUnion({user:currentUser.displayName,text,date:serverTimestamp()})});
+  lastCommentTime=now;
+};
+window.deleteComment=async(projectId,comment)=>{
+  if(!currentUser) return;
+  const projSnap=await getDoc(doc(db,'projects',projectId));
+  if(currentUser.displayName!==comment.user && projSnap.data()?.user!==currentUser.displayName) return alert("Only comment owner or post owner can delete.");
+  await updateDoc(doc(db,'projects',projectId),{comments:arrayRemove(comment)});
+};
+window.editComment=async(projectId,comment)=>{
+  const newText=prompt("Edit comment:",comment.text);if(!newText) return;
+  await deleteComment(projectId,comment);
+  await updateDoc(doc(db,'projects',projectId),{comments:arrayUnion({...comment,text:newText})});
+};
 
-window.deleteProject = async (id,user)=>{
+// --- Delete post ---
+window.deleteProject=async(id,user)=>{
   if(!currentUser||currentUser.displayName!==user) return alert("Only owner can delete");
   if(!confirm("Delete this project?")) return;
   await deleteDoc(doc(db,'projects',id));
-}
+};
 
-// --- Load projects (real-time) ---
+// --- Load projects ---
 function loadProjects(){
-  const q = query(collection(db,'projects'), orderBy('createdAt','desc'));
-  onSnapshot(q, snapshot=>{
+  const q=query(collection(db,'projects'),orderBy('createdAt','desc'));
+  onSnapshot(q,snapshot=>{
     projectsContainer.innerHTML='';
     userProjects.innerHTML='';
     snapshot.forEach(docSnap=>{
-      const p = docSnap.data();
-      const div = document.createElement('div'); div.className="project";
-      const highlight = p.stars?.includes(currentUser?.displayName)?'highlight':'';
+      const p=docSnap.data();
+      const div=document.createElement('div');div.className="project";
+      const previewLength=130;let isTruncated=false;let codePreview=p.code;
+      if(p.code.length>previewLength){codePreview=p.code.slice(0,previewLength)+"...";isTruncated=true;}
+      const highlight=p.stars?.includes(currentUser?.displayName)?'highlight':'';
       div.innerHTML=`
         <h3>${p.title} by ${p.user}</h3>
-        <pre class="code">${p.code}</pre>
+        <pre class="code" id="code-${docSnap.id}">${codePreview}</pre>
+        ${isTruncated?`<button class="expand-btn" data-id="${docSnap.id}">+ Expand</button>`:''}
         <div class="stars">
-          <button class="star-btn ${highlight}" onclick="starProject('${docSnap.id}')">⭐ ${p.stars?.length || 0}</button>
-
+          <button class="star-btn ${highlight}" data-id="${docSnap.id}">⭐ ${p.stars?.length||0}</button>
         </div>
-        <div class="comments">
-          ${p.comments?.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('')||''}
-          ${currentUser?`<input class="comment-input" id="comment-${docSnap.id}" placeholder="Add comment">
-          <button class="comment-btn" onclick="addComment('${docSnap.id}',document.getElementById('comment-${docSnap.id}').value)">Comment</button>`:''}
+        <div class="comments" id="comments-${docSnap.id}">
+          ${p.comments?.map(c=>`
+            <div class="comment">
+              <p><b>${c.user}:</b> ${c.text}</p>
+              ${currentUser?`<span class="comment-options" data-project="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">⋮</span>`:''}
+            </div>`).join('')||''}
+          ${currentUser?`<input class="comment-input" id="comment-input-${docSnap.id}" placeholder="Add comment">
+          <button class="comment-btn" data-id="${docSnap.id}">Comment</button>`:''}
         </div>
-        ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`:''}
+        ${currentUser && currentUser.displayName===p.user?`<button class="delete-btn" data-id="${docSnap.id}">Delete</button>`:''}
       `;
       projectsContainer.appendChild(div);
-      
-      // Add to profile section
+
       if(currentUser && currentUser.displayName===p.user){
-        const ud = document.createElement('div'); ud.className="project";
+        const ud=document.createElement('div');ud.className="project";
         ud.innerHTML=`<h4>${p.title}</h4><pre class="code">${p.code}</pre>
-        <button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`;
+        <button class="delete-btn" data-id="${docSnap.id}">Delete</button>`;
         userProjects.appendChild(ud);
       }
     });
+
+    // Expand button
+    document.querySelectorAll('.expand-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const id=btn.getAttribute('data-id');
+        const pre=document.getElementById('code-'+id);
+        const fullText=snapshot.docs.find(d=>d.id===id).data().code;
+        pre.innerText=fullText;
+        btn.style.display='none';
+      });
+    });
+
+    // Star buttons
+    document.querySelectorAll('.star-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>toggleStar(btn.getAttribute('data-id')));
+    });
+
+    // Comment buttons
+    document.querySelectorAll('.comment-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const id=btn.getAttribute('data-id');
+        const val=document.getElementById('comment-input-'+id).value;
+        addComment(id,val);
+        document.getElementById('comment-input-'+id).value='';
+      });
+    });
+
+    // Comment options (three dots)
+    document.querySelectorAll('.comment-options').forEach(span=>{
+      span.addEventListener('click',async()=>{
+        const projectId=span.dataset.project;
+        const user=span.dataset.user;
+        const text=span.dataset.text;
+        const comment={user,text};
+        const action=prompt("Type 'edit' to edit or 'delete' to delete this comment:");
+        if(action==='delete'){await deleteComment(projectId,comment);}
+        else if(action==='edit'){await editComment(projectId,comment);}
+      });
+    });
+
+    // Delete post buttons
+    document.querySelectorAll('.delete-btn').forEach(btn=>{
+      btn.addEventListener('click',()=>deleteProject(btn.getAttribute('data-id'),currentUser.displayName));
+    });
   });
 }
+
+// Dark mode
+const darkModeBtn=document.getElementById('darkModeBtn');
+if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
+darkModeBtn.addEventListener('click',()=>{
+  document.body.classList.toggle('dark');
+  localStorage.setItem('theme',document.body.classList.contains('dark')?'dark':'light');
+});
 </script>
 </body>
 </html>
