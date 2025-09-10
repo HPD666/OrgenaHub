@@ -38,25 +38,24 @@ button{cursor:pointer;}
 .comment p img{width:30px;height:30px;border-radius:50%;margin-right:8px;}
 .expand-btn{margin-bottom:5px;align-self:flex-start;}
 .profile-pic{width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;}
-.code-copy-btn{
-  position:absolute;
-  top:8px;
-  right:8px;
-  padding:5px 10px;
-  border:none;
-  border-radius:5px;
-  background:rgba(255,255,255,0.9);
-  cursor:pointer;
-  font-size:12px;
-  font-weight:bold;
-}
-.code-copy-btn.copied{background:#2ecc71;color:white;}
 body.dark{background-color:#1e1e1e;color:#f5f5f5;}
 body.dark header{background-color:#16a085;}
 body.dark .project{background-color:#2c2c2c;color:#f5f5f5;}
 body.dark .code{background-color:#333;color:#f5f5f5;}
 body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .edit-btn{opacity:0.85;}
-body.dark .code-copy-btn{background:rgba(0,0,0,0.6);color:white;}
+.code-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 5px;
+  border: none;
+  background: rgba(255,255,255,0.9);
+  cursor: pointer;
+}
+body.dark .code-copy-btn { background: rgba(0,0,0,0.6); color:#fff; }
+.code-copy-btn.copied { background:#2ecc71 !important; color:#fff; }
 @media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn,.edit-btn{width:100%;margin-top:5px;}}
 </style>
 </head>
@@ -214,30 +213,6 @@ window.editComment = async (projectId, commentId)=>{
 // --- Delete project ---
 window.deleteProject = async (id,user)=>{if(!currentUser||currentUser.displayName!==user)return alert("Only owner can delete"); if(!confirm("Delete this project?")) return; await deleteDoc(doc(db,'projects',id));};
 
-// --- Add copy button function ---
-function addCopyButtons() {
-  document.querySelectorAll('pre.code').forEach(block => {
-    if(block.querySelector('.code-copy-btn')) return;
-    // store full code
-    block.dataset.fullCode = block.innerText;
-    const btn = document.createElement('button');
-    btn.className = 'code-copy-btn';
-    btn.textContent = 'Copy';
-    block.appendChild(btn);
-    btn.onclick = async () => {
-      try{
-        await navigator.clipboard.writeText(block.dataset.fullCode);
-        btn.textContent = 'Copied!';
-        btn.classList.add('copied');
-        setTimeout(()=>{btn.textContent='Copy'; btn.classList.remove('copied');},1200);
-      }catch(e){
-        btn.textContent='Error';
-        setTimeout(()=>{btn.textContent='Copy';},1200);
-      }
-    };
-  });
-}
-
 // --- Load projects ---
 function loadProjects(){
   const q = query(collection(db,'projects'), orderBy('createdAt','desc'));
@@ -269,14 +244,52 @@ function loadProjects(){
         ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`:''}
       `;
       projectsContainer.appendChild(div);
+      // Add copy button
+      const pre = div.querySelector('pre.code');
+      const copyBtn = document.createElement('button');
+      copyBtn.className='code-copy-btn';
+      copyBtn.innerText='Copy';
+      pre.appendChild(copyBtn);
+      copyBtn.addEventListener('click', async ()=>{
+        try {
+          await navigator.clipboard.writeText(pre.dataset.fullCode);
+          copyBtn.innerText='Copied!';
+          copyBtn.classList.add('copied');
+          setTimeout(()=>{copyBtn.innerText='Copy'; copyBtn.classList.remove('copied');},1200);
+        } catch { copyBtn.innerText='Error'; setTimeout(()=>{copyBtn.innerText='Copy';},1200);}
+      });
       if(currentUser && currentUser.displayName===p.user){
         const ud=document.createElement('div'); ud.className="project";
         ud.innerHTML=`<h4>${p.title}</h4><pre class="code" data-full-code="${p.code}">${p.code}</pre>
         <button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`;
+        const preUD = ud.querySelector('pre.code');
+        const copyBtnUD = document.createElement('button');
+        copyBtnUD.className='code-copy-btn';
+        copyBtnUD.innerText='Copy';
+        preUD.appendChild(copyBtnUD);
+        copyBtnUD.addEventListener('click', async ()=>{await navigator.clipboard.writeText(preUD.dataset.fullCode); copyBtnUD.innerText='Copied!'; setTimeout(()=>{copyBtnUD.innerText='Copy';},1200);});
         userProjects.appendChild(ud);
       }
     });
-    document.querySelectorAll('.expand-btn').forEach(btn=>btn.onclick=()=>{const pre=document.getElementById('code-'+btn.dataset.id); pre.innerText=pre.dataset.fullCode; btn.style.display='none';});
+    // Expand button logic
+    document.querySelectorAll('.expand-btn').forEach(btn=>{
+      btn.onclick=()=>{
+        const pre = document.getElementById('code-'+btn.dataset.id);
+        pre.innerText = pre.dataset.fullCode;
+        btn.style.display='none';
+        // Re-add copy button if missing
+        if(!pre.querySelector('.code-copy-btn')){
+          const copyBtn = document.createElement('button');
+          copyBtn.className='code-copy-btn';
+          copyBtn.innerText='Copy';
+          pre.appendChild(copyBtn);
+          copyBtn.addEventListener('click', async ()=>{
+            try { await navigator.clipboard.writeText(pre.dataset.fullCode); copyBtn.innerText='Copied!'; copyBtn.classList.add('copied'); setTimeout(()=>{copyBtn.innerText='Copy'; copyBtn.classList.remove('copied');},1200);}
+            catch{copyBtn.innerText='Error'; setTimeout(()=>{copyBtn.innerText='Copy';},1200);}
+          });
+        }
+      };
+    });
     document.querySelectorAll('.star-btn').forEach(btn=>btn.onclick=()=>toggleStar(btn.dataset.id));
     document.querySelectorAll('.comment-btn').forEach(btn=>{const inputElem=document.getElementById('comment-input-'+btn.dataset.id); btn.onclick=()=>addComment(btn.dataset.id,inputElem);});
     document.querySelectorAll('.delete-btn').forEach(btn=>{
@@ -284,7 +297,6 @@ function loadProjects(){
       else btn.onclick=()=>deleteComment(btn.dataset.id,parseInt(btn.dataset.cid));
     });
     document.querySelectorAll('.edit-btn').forEach(btn=>btn.onclick=()=>editComment(btn.dataset.id,parseInt(btn.dataset.cid)));
-    addCopyButtons(); // Add copy buttons after loading projects
   });
 }
 </script>
