@@ -28,6 +28,8 @@ main{max-width:1000px;margin:20px auto;padding:0 15px;}
 .comment-btn:hover{background:#1f5f8b;}
 .delete-btn{padding:6px 12px;background:#c0392b;color:white;border:none;border-radius:5px;cursor:pointer;}
 .delete-btn:hover{background:#992d22;}
+.edit-btn{padding:6px 12px;background:#8e44ad;color:white;border:none;border-radius:5px;cursor:pointer;margin-left:5px;}
+.edit-btn:hover{background:#732d91;}
 #post-section, .profile-section{background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:20px;}
 input,textarea{width:100%;margin-bottom:10px;padding:8px;border-radius:5px;border:1px solid #ccc;}
 button{cursor:pointer;}
@@ -40,8 +42,8 @@ body.dark{background-color:#1e1e1e;color:#f5f5f5;}
 body.dark header{background-color:#16a085;}
 body.dark .project{background-color:#2c2c2c;color:#f5f5f5;}
 body.dark .code{background-color:#333;color:#f5f5f5;}
-body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn{opacity:0.85;}
-@media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn{width:100%;margin-top:5px;}}
+body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .edit-btn{opacity:0.85;}
+@media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn,.edit-btn{width:100%;margin-top:5px;}}
 </style>
 </head>
 <body>
@@ -103,7 +105,7 @@ const profileSection = document.getElementById('profile-section');
 const profileName = document.getElementById('profileName');
 const userProjects = document.getElementById('userProjects');
 const darkModeBtn = document.getElementById('darkModeBtn');
-const defaultAvatar = 'https://www.gravatar.com/avatar/?d=mp&s=30';
+const defaultAvatar = 'https://www.w3schools.com/howto/img_avatar.png';
 
 if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
 darkModeBtn.addEventListener('click', () => {
@@ -191,6 +193,19 @@ window.deleteComment = async (projectId, comment)=>{
   await updateDoc(doc(db,'projects',projectId),{comments: arrayRemove(comment)});
 };
 
+// --- Edit comment ---
+window.editComment = async (projectId, comment)=>{
+  if(!currentUser || comment.user!==currentUser.displayName) return alert("Only comment owner can edit.");
+  const newText = prompt("Edit your comment:", comment.text);
+  if(!newText) return;
+  await updateDoc(doc(db,'projects',projectId),{
+    comments: arrayRemove(comment)
+  });
+  await updateDoc(doc(db,'projects',projectId),{
+    comments: arrayUnion({user: comment.user, userPhoto: comment.userPhoto, text: newText})
+  });
+};
+
 // --- Delete project ---
 window.deleteProject = async (id,user)=>{
   if(!currentUser || currentUser.displayName!==user) return alert("Only owner can delete");
@@ -221,9 +236,11 @@ function loadProjects(){
           ${p.comments?.map(c=>`
             <div class="comment">
               <p><img src="${c.userPhoto || defaultAvatar}">${c.user}: ${c.text}</p>
-              ${(currentUser && (c.user===currentUser.displayName || p.user===currentUser.displayName))?`<div class="comment-actions">
-                <button class="delete-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Delete</button>
-              </div>`:''}
+              ${(currentUser && (c.user===currentUser.displayName || p.user===currentUser.displayName))?`
+                <div class="comment-actions">
+                  ${c.user===currentUser.displayName?`<button class="edit-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Edit</button>`:''}
+                  <button class="delete-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Delete</button>
+                </div>`:''}
             </div>`).join('')||''}
           ${currentUser?`<input class="comment-input" placeholder="Add comment" id="comment-input-${docSnap.id}">
           <button class="comment-btn" data-id="${docSnap.id}">Comment</button>`:''}
@@ -250,7 +267,10 @@ function loadProjects(){
     });
     document.querySelectorAll('.delete-btn').forEach(btn=>{
       if(btn.innerText==="Delete Post") btn.onclick = ()=>deleteProject(btn.dataset.id,currentUser.displayName);
-      else btn.onclick = ()=>deleteComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text});
+      else btn.onclick = ()=>deleteComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text, userPhoto: defaultAvatar});
+    });
+    document.querySelectorAll('.edit-btn').forEach(btn=>{
+      btn.onclick = ()=>editComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text, userPhoto: defaultAvatar});
     });
   });
 }
