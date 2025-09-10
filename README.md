@@ -48,7 +48,7 @@ Check out the live demo [here](https://hpd666.github.io/OrgenaHub/).
 
 1. Clone the repository:
 
-'''git clone https://github.com/HPD666/OrgenaHub.git'''
+git clone https://github.com/HPD666/OrgenaHub.git
 cd OrgenaHub
 
 2. Open index.html in your browser or host via GitHub Pages.
