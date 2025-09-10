@@ -225,20 +225,28 @@ function loadProjects(){
       const p = docSnap.data();
       const div = document.createElement('div'); div.className="project";
       const highlight = p.stars?.includes(currentUser?.displayName)?'highlight':'';
-      div.innerHTML=`
-        <h3>${p.title} by ${p.user}</h3>
-        <pre class="code">${p.code}</pre>
-        <div class="stars">
-          <button class="star-btn ${highlight}" onclick="starProject('${docSnap.id}')">⭐ ${p.stars?.length || 0}</button>
+      const previewLength = 130;
+let codePreview = p.code;
+let isTruncated = false;
+if (p.code.length > previewLength) {
+  codePreview = p.code.slice(0, previewLength) + '...';
+  isTruncated = true;
+}
+div.innerHTML = `
+  <h3>${p.title} by ${p.user}</h3>
+  <pre class="code" id="code-${docSnap.id}">${codePreview}</pre>
+  ${isTruncated ? `<button onclick="document.getElementById('code-${docSnap.id}').innerText='${p.code.replace(/`/g,'\\`')}'; this.style.display='none';">+ Expand</button>` : ''}
+  <div class="stars">
+    <button class="star-btn ${highlight}" onclick="starProject('${docSnap.id}')">⭐ ${p.stars?.length || 0}</button>
+  </div>
+  <div class="comments">
+    ${p.comments?.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('')||''}
+    ${currentUser?`<input class="comment-input" id="comment-${docSnap.id}" placeholder="Add comment">
+    <button class="comment-btn" onclick="addComment('${docSnap.id}',document.getElementById('comment-${docSnap.id}').value)">Comment</button>`:''}
+  </div>
+  ${currentUser && currentUser.displayName===p.user?`<button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`:''}
+`;
 
-        </div>
-        <div class="comments">
-          ${p.comments?.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('')||''}
-          ${currentUser?`<input class="comment-input" id="comment-${docSnap.id}" placeholder="Add comment">
-          <button class="comment-btn" onclick="addComment('${docSnap.id}',document.getElementById('comment-${docSnap.id}').value)">Comment</button>`:''}
-        </div>
-        ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`:''}
-      `;
       projectsContainer.appendChild(div);
       
       // Add to profile section
