@@ -69,7 +69,8 @@ cd OrgenaHub `
 Open index.html in your browser or host via GitHub Pages.
 Configure Firebase in scripts/firebase-config.js with your project credentials.
 Ensure Firestore read/write rules are set properly.
-🤝 Contributing
+
+# 🤝 Contributing
 We ❤️ contributions!
 Fork the repo
 Create a feature branch: git checkout -b feature/YourFeature
@@ -77,9 +78,11 @@ Commit your changes: git commit -m "Add feature"
 Push to the branch: git push origin feature/YourFeature
 Open a pull request
 See CONTRIBUTING.md for details.
-📦 Releases & Changelog
+
+# 📦 Releases & Changelog
 Check the Releases page for updates and changelogs.
-🏷 Tags / Topics
+
+# 🏷 Tags / Topics
 #SocialCoding #RealtimeCollaboration #OrgenaHub #OpenSource #WebApp
 <p align="center"> <img src="https://img.shields.io/badge/Let's%20Code-💻-blue?style=for-the-badge" /> <img src="https://img.shields.io/badge/Community-🤝-orange?style=for-the-badge" /> </p>
 Happy coding with Orgena Hub! 🚀
