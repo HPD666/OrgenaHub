@@ -32,47 +32,79 @@ main{max-width:1000px;margin:20px auto;padding:0 15px;}
 input,textarea{width:100%;margin-bottom:10px;padding:8px;border-radius:5px;border:1px solid #ccc;}
 button{cursor:pointer;}
 @media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn{width:100%;margin-top:5px;}}
-/* Dark mode */
-body.dark {background-color:#1e1e1e;color:#f5f5f5;}
-body.dark header{background-color:#16a085;}
-body.dark .project{background-color:#2c2c2c;color:#f5f5f5;}
-body.dark .code{background-color:#333;color:#f5f5f5;}
-body.dark .star-btn,body.dark .comment-btn,body.dark .delete-btn{opacity:0.85;}
 </style>
 </head>
 <body>
 <header>
-  <h1>Orgena Hub</h1>
-  <nav>
-    <button id="loginBtn">Login/Register</button>
-    <button id="logoutBtn" style="display:none;">Logout</button>
-    <button id="darkModeBtn">Toggle Dark Mode</button>
-  </nav>
-</header>
+<h1>Orgena Hub</h1>
+<nav>
+<button id="loginBtn">Login/Register</button>
+<button id="logoutBtn" style="display:none;">Logout</button>
+  <!-- Dark Mode Toggle Button -->
+<button id="darkModeBtn">Toggle Dark Mode</button>
+</nav>
+<script>
+// Dark mode toggle
+const darkModeBtn = document.getElementById('darkModeBtn');
 
+// Load saved theme
+const currentTheme = localStorage.getItem('theme');
+if (currentTheme === 'dark') document.body.classList.add('dark');
+
+// Toggle dark mode
+darkModeBtn.addEventListener('click', () => {
+  document.body.classList.toggle('dark');
+  if (document.body.classList.contains('dark')) {
+    localStorage.setItem('theme', 'dark');
+  } else {
+    localStorage.setItem('theme', 'light');
+  }
+});
+</script>
+
+<style>
+/* Dark mode styles */
+body.dark {
+  background-color: #1e1e1e;
+  color: #f5f5f5;
+}
+body.dark header {
+  background-color: #16a085;
+}
+body.dark .project {
+  background-color: #2c2c2c;
+  color: #f5f5f5;
+}
+body.dark .code {
+  background-color: #333;
+  color: #f5f5f5;
+}
+body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn {
+  opacity: 0.85;
+}
+</style>
+
+</header>
 <main>
-  <div id="post-section" style="display:none;">
-    <h2>Post Your Code</h2>
-    <input id="title" placeholder="Project Title">
-    <textarea id="code" rows="6" placeholder="Paste your code here"></textarea>
-    <button id="postBtn">Post Project</button>
-  </div>
-  <div class="profile-section" id="profile-section" style="display:none;">
-    <h2>Your Profile</h2>
-    <div id="profileName"></div>
-    <div id="userProjects"></div>
-  </div>
-  <h2>All Projects</h2>
-  <div id="projects"></div>
+<div id="post-section" style="display:none;">
+<h2>Post Your Code</h2>
+<input id="title" placeholder="Project Title">
+<textarea id="code" rows="6" placeholder="Paste your code here"></textarea>
+<button id="postBtn">Post Project</button>
+</div>
+<div class="profile-section" id="profile-section" style="display:none;">
+<h2>Your Profile</h2>
+<div id="profileName"></div>
+<div id="userProjects"></div>
+</div>
+<h2>All Projects</h2>
+<div id="projects"></div>
 </main>
 
-<<script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-import { 
-  getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, 
-  arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 // Firebase config (replace with your own)
 const firebaseConfig = {
@@ -84,6 +116,7 @@ const firebaseConfig = {
   appId: "1:807048048445:web:48a2e965eee533a40e5f54",
   measurementId: "G-ZZRELPEM6J"
 };
+
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -106,7 +139,7 @@ let currentUser = null;
 
 // --- Auth ---
 loginBtn.addEventListener('click', async () => {
-  try {
+  try{
     const result = await signInWithPopup(auth, provider);
     currentUser = result.user;
     updateUI();
@@ -121,25 +154,25 @@ logoutBtn.addEventListener('click', async () => {
 });
 
 // Auth state
-onAuthStateChanged(auth, user => {
-  currentUser = user;
+onAuthStateChanged(auth,user=>{
+  currentUser=user;
   updateUI();
-  if (user) loadProjects();
+  if(user) loadProjects();
 });
 
 function updateUI(){
-  loginBtn.style.display = currentUser ? 'none' : 'inline-block';
-  logoutBtn.style.display = currentUser ? 'inline-block' : 'none';
-  postSection.style.display = currentUser ? 'block' : 'none';
-  profileSection.style.display = currentUser ? 'block' : 'none';
-  if(currentUser) profileName.innerText = "Username: " + currentUser.displayName;
+  loginBtn.style.display=currentUser?'none':'inline-block';
+  logoutBtn.style.display=currentUser?'inline-block':'none';
+  postSection.style.display=currentUser?'block':'none';
+  profileSection.style.display=currentUser?'block':'none';
+  if(currentUser) profileName.innerText = "Username: "+currentUser.displayName;
 }
 
 // --- Post project ---
 postBtn.addEventListener('click', async ()=>{
   const title = titleInput.value.trim();
   const code = codeInput.value.trim();
-  if(!title || !code) return alert("Fill both fields");
+  if(!title||!code)return alert("Fill both fields");
   await addDoc(collection(db,'projects'),{
     title,
     code,
@@ -151,32 +184,25 @@ postBtn.addEventListener('click', async ()=>{
   titleInput.value=''; codeInput.value='';
 });
 
-// --- Star / Unstar ---
-window.toggleStar = async (id, stars)=>{
+// --- Star, comment, delete ---
+window.starProject = async (id, stars)=>{
   if(!currentUser) return alert("Login first");
+  if(stars?.includes(currentUser.displayName)) return;
   const projectRef = doc(db,'projects',id);
-  if(stars?.includes(currentUser.displayName)){
-    await updateDoc(projectRef,{ stars: arrayRemove(currentUser.displayName) });
-  } else {
-    await updateDoc(projectRef,{ stars: arrayUnion(currentUser.displayName) });
-  }
-};
+  await updateDoc(projectRef,{stars: arrayUnion(currentUser.displayName)});
+}
 
-// --- Add comment ---
 window.addComment = async (id,text)=>{
-  if(!currentUser || !text) return;
+  if(!currentUser||!text) return;
   const projectRef = doc(db,'projects',id);
-  await updateDoc(projectRef,{
-    comments: arrayUnion({ user: currentUser.displayName, text })
-  });
-};
+  await updateDoc(projectRef,{comments: arrayUnion({user: currentUser.displayName,text})});
+}
 
-// --- Delete project ---
 window.deleteProject = async (id,user)=>{
-  if(!currentUser || currentUser.displayName!==user) return alert("Only owner can delete");
+  if(!currentUser||currentUser.displayName!==user) return alert("Only owner can delete");
   if(!confirm("Delete this project?")) return;
   await deleteDoc(doc(db,'projects',id));
-};
+}
 
 // --- Load projects (real-time) ---
 function loadProjects(){
@@ -186,28 +212,26 @@ function loadProjects(){
     userProjects.innerHTML='';
     snapshot.forEach(docSnap=>{
       const p = docSnap.data();
-      const div = document.createElement('div'); 
-      div.className="project";
+      const div = document.createElement('div'); div.className="project";
       const highlight = p.stars?.includes(currentUser?.displayName)?'highlight':'';
       div.innerHTML=`
         <h3>${p.title} by ${p.user}</h3>
         <pre class="code">${p.code}</pre>
         <div class="stars">
-          <button class="star-btn ${highlight}" onclick="toggleStar('${docSnap.id}',${JSON.stringify(p.stars)})">⭐ ${p.stars?.length||0}</button>
+          <button class="star-btn ${highlight}" onclick="starProject('${docSnap.id}',${JSON.stringify(p.stars)})">⭐ ${p.stars?.length||0}</button>
         </div>
         <div class="comments">
           ${p.comments?.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('')||''}
           ${currentUser?`<input class="comment-input" id="comment-${docSnap.id}" placeholder="Add comment">
           <button class="comment-btn" onclick="addComment('${docSnap.id}',document.getElementById('comment-${docSnap.id}').value)">Comment</button>`:''}
         </div>
-        ${currentUser && currentUser.displayName===p.user?`<button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`:''}
+        ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`:''}
       `;
       projectsContainer.appendChild(div);
       
       // Add to profile section
       if(currentUser && currentUser.displayName===p.user){
-        const ud = document.createElement('div'); 
-        ud.className="project";
+        const ud = document.createElement('div'); ud.className="project";
         ud.innerHTML=`<h4>${p.title}</h4><pre class="code">${p.code}</pre>
         <button class="delete-btn" onclick="deleteProject('${docSnap.id}','${p.user}')">Delete</button>`;
         userProjects.appendChild(ud);
