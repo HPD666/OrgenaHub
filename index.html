@@ -1,29 +1,17 @@
 <!DOCTYPE html>
-<!-- Background note -->
+<head>
+     <!-- Background note -->
 <div id="registerNote" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%);
      font-size:40px; color:rgba(0,0,0,0.1); z-index:0;">
   Register first to view posts.
 </div>
 
 <script>
-  // Function to toggle the register note
-  function toggleRegisterNote() {
-    const note = document.getElementById('registerNote');
-    note.style.display = currentUser ? 'none' : 'block';
-  }
-
-  // Call this whenever the auth state changes
-  onAuthStateChanged(auth, user => {
-    currentUser = user;
-    toggleRegisterNote();
-    updateUI();
-    if(user) loadProjects();
-  });
+  // Inside your existing updateUI() function, add this:
+  const registerNote = document.getElementById('registerNote');
+  registerNote.style.display = currentUser ? 'none' : 'block';
 </script>
 
-
-
-<head>
   <style>
 html, body {
   touch-action: manipulation;    /* prevents double-tap zoom & most gestures */
