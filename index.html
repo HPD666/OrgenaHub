@@ -37,8 +37,6 @@ button{cursor:pointer;}
 .comment{position:relative;background:#f0f0f0;padding:5px 10px;border-radius:5px;width:100%;display:flex;align-items:center;margin-bottom:3px;}
 .comment p{margin:0;flex:1;display:flex;align-items:center;}
 .comment p img{width:30px;height:30px;border-radius:50%;margin-right:8px;}
-.comment-options{cursor:pointer;margin-left:5px;font-weight:bold;color:#555;}
-.comment-options:hover{color:#000;}
 .expand-btn{margin-bottom:5px;align-self:flex-start;}
 .profile-pic{width:40px;height:40px;border-radius:50%;vertical-align:middle;margin-right:10px;}
 body.dark{background-color:#1e1e1e;color:#f5f5f5;}
@@ -84,7 +82,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
   authDomain: "orgenahub-7bca3.firebaseapp.com",
   projectId: "orgenahub-7bca3",
-  storageBucket: "orgenahub-7bca3.firebasestorage.app",
+  storageBucket: "orgenahub-7bca3.appspot.com",
   messagingSenderId: "807048048445",
   appId: "1:807048048445:web:48a2e965eee533a40e5f54",
   measurementId: "G-ZZRELPEM6J"
@@ -95,118 +93,124 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// DOM
-const loginBtn=document.getElementById('loginBtn');
-const logoutBtn=document.getElementById('logoutBtn');
-const changeUsernameBtn=document.getElementById('changeUsernameBtn');
-const postSection=document.getElementById('post-section');
-const titleInput=document.getElementById('title');
-const codeInput=document.getElementById('code');
-const postBtn=document.getElementById('postBtn');
-const projectsContainer=document.getElementById('projects');
-const profileSection=document.getElementById('profile-section');
-const profileName=document.getElementById('profileName');
-const userProjects=document.getElementById('userProjects');
+// DOM elements
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const changeUsernameBtn = document.getElementById('changeUsernameBtn');
+const postSection = document.getElementById('post-section');
+const titleInput = document.getElementById('title');
+const codeInput = document.getElementById('code');
+const postBtn = document.getElementById('postBtn');
+const projectsContainer = document.getElementById('projects');
+const profileSection = document.getElementById('profile-section');
+const profileName = document.getElementById('profileName');
+const userProjects = document.getElementById('userProjects');
 
-let currentUser=null;
-let lastPostTime=0;
-let lastCommentTime=0;
-const defaultAvatar='https://www.gravatar.com/avatar/?d=mp&s=30';
+let currentUser = null;
+let lastPostTime = 0;
+let lastCommentTime = 0;
+const defaultAvatar = 'https://www.gravatar.com/avatar/?d=mp&s=30';
 
 // Auth
-loginBtn.addEventListener('click', async ()=>{
-  try{
-    const result=await signInWithPopup(auth,provider);
-    currentUser=result.user;
+loginBtn.addEventListener('click', async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+    currentUser = result.user;
     updateUI();
     loadProjects();
-  }catch(e){alert("Login failed: "+e.message);}
+  } catch(e) { alert("Login failed: " + e.message); }
 });
-logoutBtn.addEventListener('click', async ()=>{await signOut(auth); currentUser=null; updateUI();});
-changeUsernameBtn.addEventListener('click', async ()=>{
-  const newName=prompt("Enter new username:", currentUser.displayName);
-  if(newName && newName.trim()!==currentUser.displayName){
-    await updateProfile(currentUser,{displayName:newName});
-    currentUser.displayName=newName;
+
+logoutBtn.addEventListener('click', async () => {
+  await signOut(auth); currentUser = null; updateUI();
+});
+
+changeUsernameBtn.addEventListener('click', async () => {
+  const newName = prompt("Enter new username:", currentUser.displayName);
+  if(newName && newName.trim() !== currentUser.displayName){
+    await updateProfile(currentUser, {displayName: newName});
+    currentUser.displayName = newName;
     updateUI();
     alert("Username updated!");
   }
 });
-onAuthStateChanged(auth,user=>{currentUser=user; updateUI(); if(user) loadProjects();});
+
+onAuthStateChanged(auth, user => { currentUser = user; updateUI(); if(user) loadProjects(); });
 
 function updateUI(){
-  loginBtn.style.display=currentUser?'none':'inline-block';
-  logoutBtn.style.display=currentUser?'inline-block':'none';
-  changeUsernameBtn.style.display=currentUser?'inline-block':'none';
-  postSection.style.display=currentUser?'block':'none';
-  profileSection.style.display=currentUser?'block':'none';
+  loginBtn.style.display = currentUser ? 'none' : 'inline-block';
+  logoutBtn.style.display = currentUser ? 'inline-block' : 'none';
+  changeUsernameBtn.style.display = currentUser ? 'inline-block' : 'none';
+  postSection.style.display = currentUser ? 'block' : 'none';
+  profileSection.style.display = currentUser ? 'block' : 'none';
   if(currentUser){
-    const avatar=currentUser.photoURL||defaultAvatar;
-    profileName.innerHTML=`<img class="profile-pic" src="${avatar}"> ${currentUser.displayName}`;
+    const avatar = currentUser.photoURL || defaultAvatar;
+    profileName.innerHTML = `<img class="profile-pic" src="${avatar}"> ${currentUser.displayName}`;
   }
 }
 
-// Post
-postBtn.addEventListener('click', async ()=>{
-  const now=Date.now();
-  if(now-lastPostTime<5000) return alert("Wait 5s between posts.");
-  const title=titleInput.value.trim(); const code=codeInput.value.trim();
-  if(!title||!code) return alert("Fill both fields");
-  await addDoc(collection(db,'projects'),{
-    title, code, user: currentUser.displayName, stars: [], comments: [], createdAt: serverTimestamp()
-  });
-  lastPostTime=now; titleInput.value=''; codeInput.value='';
+// Post Project
+postBtn.addEventListener('click', async () => {
+  if(!currentUser) return alert("Login first");
+  const now = Date.now();
+  if(now - lastPostTime < 5000) return alert("Wait 5s between posts.");
+  const title = titleInput.value.trim(), code = codeInput.value.trim();
+  if(!title || !code) return alert("Fill both fields");
+  await addDoc(collection(db, 'projects'), { title, code, user: currentUser.displayName, stars: [], comments: [], createdAt: serverTimestamp() });
+  lastPostTime = now; titleInput.value=''; codeInput.value='';
 });
 
-// Star
-window.toggleStar=async(id)=>{
+// Toggle Star
+window.toggleStar = async id => {
   if(!currentUser) return alert("Login first");
-  const ref=doc(db,'projects',id); const snap=await getDoc(ref);
-  const stars=snap.data()?.stars||[];
-  if(stars.includes(currentUser.displayName)) await updateDoc(ref,{stars:stars.filter(s=>s!==currentUser.displayName)});
-  else await updateDoc(ref,{stars:arrayUnion(currentUser.displayName)});
+  const ref = doc(db, 'projects', id);
+  const snap = await getDoc(ref);
+  const stars = snap.data()?.stars || [];
+  if(stars.includes(currentUser.displayName)) await updateDoc(ref, { stars: stars.filter(s=>s!==currentUser.displayName) });
+  else await updateDoc(ref, { stars: arrayUnion(currentUser.displayName) });
 };
 
 // Comments
-window.addComment=async(id,inputElem)=>{
+window.addComment = async (id, inputElem) => {
   if(!currentUser) return;
-  const text=inputElem.value.trim(); if(!text) return;
-  const now=Date.now(); if(now-lastCommentTime<3000) return alert("Wait 3s between comments.");
-  await updateDoc(doc(db,'projects',id),{comments:arrayUnion({user:currentUser.displayName,text,date:serverTimestamp()})});
-  lastCommentTime=now; inputElem.value='';
+  const text = inputElem.value.trim(); if(!text) return;
+  const now = Date.now(); if(now - lastCommentTime < 3000) return alert("Wait 3s between comments.");
+  await updateDoc(doc(db, 'projects', id), { comments: arrayUnion({ user: currentUser.displayName, text, date: serverTimestamp() }) });
+  lastCommentTime = now; inputElem.value=''; inputElem.focus();
 };
 
-window.deleteComment=async(projectId,comment)=>{
+window.deleteComment = async (projectId, comment) => {
   if(!currentUser) return;
-  const projSnap=await getDoc(doc(db,'projects',projectId));
-  if(comment.user!==currentUser.displayName && projSnap.data()?.user!==currentUser.displayName) return alert("Only comment owner or post owner can delete.");
-  await updateDoc(doc(db,'projects',projectId),{comments:arrayRemove(comment)});
+  const projSnap = await getDoc(doc(db,'projects',projectId));
+  if(comment.user !== currentUser.displayName && projSnap.data()?.user !== currentUser.displayName) return alert("Only comment owner or post owner can delete.");
+  await updateDoc(doc(db,'projects',projectId), { comments: arrayRemove(comment) });
 };
 
-window.editComment=async(projectId,comment)=>{
-  if(comment.user!==currentUser.displayName) return alert("Only your comment can be edited.");
-  const newText=prompt("Edit comment:",comment.text); if(!newText) return;
-  await deleteComment(projectId,comment);
-  await updateDoc(doc(db,'projects',projectId),{comments:arrayUnion({...comment,text:newText})});
+window.editComment = async (projectId, comment) => {
+  if(comment.user !== currentUser.displayName) return alert("Only your comment can be edited.");
+  const newText = prompt("Edit comment:", comment.text); if(!newText) return;
+  await deleteComment(projectId, comment);
+  await updateDoc(doc(db,'projects',projectId), { comments: arrayUnion({...comment, text: newText}) });
 };
 
-// Delete Post
-window.deleteProject=async(id,user)=>{
-  if(!currentUser||currentUser.displayName!==user) return alert("Only owner can delete");
+// Delete Project
+window.deleteProject = async (id, user) => {
+  if(!currentUser || currentUser.displayName !== user) return alert("Only owner can delete");
   if(!confirm("Delete this project?")) return;
   await deleteDoc(doc(db,'projects',id));
 };
 
 // Load Projects
 function loadProjects(){
-  const q=query(collection(db,'projects'),orderBy('createdAt','desc'));
-  onSnapshot(q,snapshot=>{
+  const q = query(collection(db,'projects'), orderBy('createdAt','desc'));
+  onSnapshot(q, snapshot => {
     projectsContainer.innerHTML=''; userProjects.innerHTML='';
-    snapshot.forEach(docSnap=>{
-      const p=docSnap.data(); const div=document.createElement('div'); div.className="project";
-      let codePreview=p.code; let isTruncated=false;
-      if(p.code.length>130){ codePreview=p.code.slice(0,130)+"..."; isTruncated=true; }
-      div.innerHTML=`
+    snapshot.forEach(docSnap => {
+      const p = docSnap.data();
+      const div = document.createElement('div'); div.className="project";
+      let codePreview = p.code; let isTruncated = false;
+      if(p.code.length > 130){ codePreview = p.code.slice(0,130) + "..."; isTruncated = true; }
+      div.innerHTML = `
         <h3>${p.title} by ${p.user}</h3>
         <pre class="code" id="code-${docSnap.id}">${codePreview}</pre>
         ${isTruncated?`<button class="expand-btn" data-id="${docSnap.id}">+ Expand</button>`:''}
@@ -225,54 +229,45 @@ function loadProjects(){
           ${currentUser?`<input class="comment-input" placeholder="Add comment" id="comment-input-${docSnap.id}">
           <button class="comment-btn" data-id="${docSnap.id}">Comment</button>`:''}
         </div>
-        ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`:''}
+        ${currentUser && currentUser.displayName===p.user?`<button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`:''}
       `;
       projectsContainer.appendChild(div);
 
-      // Profile Section
-      if(currentUser&&currentUser.displayName===p.user){
-        const ud=document.createElement('div'); ud.className="project";
-        ud.innerHTML=`<h4>${p.title}</h4><pre class="code">${p.code}</pre>
+      if(currentUser && currentUser.displayName===p.user){
+        const ud = document.createElement('div'); ud.className="project";
+        ud.innerHTML = `<h4>${p.title}</h4><pre class="code">${p.code}</pre>
         <button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`;
         userProjects.appendChild(ud);
       }
     });
 
-    // Expand
-    document.querySelectorAll('.expand-btn').forEach(btn=>{
-      btn.onclick=()=>{
-        const id=btn.dataset.id;
-        const pre=document.getElementById('code-'+id);
-        const fullText=snapshot.docs.find(d=>d.id===id).data().code;
-        pre.innerText=fullText; btn.style.display='none';
+    // Attach button events
+    document.querySelectorAll('.expand-btn').forEach(btn => {
+      btn.onclick = () => {
+        const pre = document.getElementById('code-'+btn.dataset.id);
+        const fullText = snapshot.docs.find(d=>d.id===btn.dataset.id).data().code;
+        pre.innerText = fullText; btn.style.display='none';
       }
     });
-
-    // Star
-    document.querySelectorAll('.star-btn').forEach(btn=>{ btn.onclick=()=>toggleStar(btn.dataset.id); });
-
-    // Comment
-    document.querySelectorAll('.comment-btn').forEach(btn=>{
-      const id=btn.dataset.id;
-      const inputElem=document.getElementById('comment-input-'+id);
-      btn.onclick=()=>addComment(id,inputElem);
+    document.querySelectorAll('.star-btn').forEach(btn => btn.onclick = ()=>toggleStar(btn.dataset.id));
+    document.querySelectorAll('.comment-btn').forEach(btn => {
+      const inputElem = document.getElementById('comment-input-'+btn.dataset.id);
+      btn.onclick = ()=>addComment(btn.dataset.id, inputElem);
     });
-
-    // Edit/Delete comment
-    document.querySelectorAll('.edit-btn').forEach(btn=>btn.onclick=()=>editComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text}));
-    document.querySelectorAll('.delete-btn').forEach(btn=>{
-      if(btn.innerText==="Delete Post") btn.onclick=()=>deleteProject(btn.dataset.id,currentUser.displayName);
-      else btn.onclick=()=>deleteComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text});
+    document.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = ()=>editComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text}));
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+      if(btn.innerText==="Delete Post") btn.onclick = ()=>deleteProject(btn.dataset.id,currentUser.displayName);
+      else btn.onclick = ()=>deleteComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text});
     });
   });
 }
 
 // Dark Mode
-const darkModeBtn=document.getElementById('darkModeBtn');
+const darkModeBtn = document.getElementById('darkModeBtn');
 if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
-darkModeBtn.addEventListener('click',()=>{
+darkModeBtn.addEventListener('click', () => {
   document.body.classList.toggle('dark');
-  localStorage.setItem('theme',document.body.classList.contains('dark')?'dark':'light');
+  localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
 });
 </script>
 </body>
