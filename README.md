@@ -48,14 +48,15 @@ Check out the live demo [here](https://hpd666.github.io/OrgenaHub/).
 
 1. Clone the repository:
 
-git clone https://github.com/HPD666/OrgenaHub.git
-cd OrgenaHub
+~~~git clone https://github.com/HPD666/OrgenaHub.git
+cd OrgenaHub~~~
 
-2. Open index.html in your browser or host via GitHub Pages.
+2. Open ~~~index.html~~~ in your browser or host via GitHub Pages.
    
 3. Configure Firebase for your project:
 Replace Firebase config in scripts/firebase-config.js with your own project credentials.
 Make sure Firestore rules are properly set for read/write access.
+
 ## Easy way for usage
 1.Register at https://hpd666.github.io/OrgenaHub/
 2.Open https://hpd666.github.io/Orgena-Web/ and start coding. You can get guidance from the ai or here https://hpd666.github.io/OrgenaCode-Guide/
