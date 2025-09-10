@@ -47,7 +47,7 @@ Check out the live demo [here](https://hpd666.github.io/OrgenaHub/).
 
 ```bash
 git clone https://github.com/HPD666/OrgenaHub.git
-cd OrgenaHub
+cd OrgenaHub ```
 Open index.html in your browser or host via GitHub Pages.
 Configure Firebase for your project:
 Replace Firebase config in scripts/firebase-config.js with your own project credentials.
