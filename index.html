@@ -185,23 +185,22 @@ postBtn.addEventListener('click', async ()=>{
 });
 
 // --- Star, comment, delete ---
-window.starProject = async (id, stars)=>{
-  if(!currentUser) return alert("Login first");
+import { getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-  const projectRef = doc(db,'projects',id);
-  const userId = currentUser.uid; // use UID instead of displayName for uniqueness
+window.starProject = async (id) => {
+  if (!currentUser) return alert("Login first");
 
-  // Check if already starred
-  const hasStarred = stars?.includes(userId);
+  const projectRef = doc(db, 'projects', id);
+  const projectSnap = await getDoc(projectRef);
+  const stars = projectSnap.data()?.stars || [];
 
-  if(hasStarred){
-    // remove star
-    await updateDoc(projectRef, { stars: stars.filter(s => s !== userId) });
-  } else {
-    // add star
-    await updateDoc(projectRef, { stars: [...stars, userId] });
-  }
-}
+  if (stars.includes(currentUser.displayName)) return; // already starred
+
+  await updateDoc(projectRef, {
+    stars: arrayUnion(currentUser.displayName)
+  });
+};
+
 
 
 window.addComment = async (id,text)=>{
@@ -230,7 +229,8 @@ function loadProjects(){
         <h3>${p.title} by ${p.user}</h3>
         <pre class="code">${p.code}</pre>
         <div class="stars">
-          <button class="star-btn ${highlight}" onclick="starProject('${docSnap.id}',${JSON.stringify(p.stars)})">⭐ ${p.stars?.length||0}</button>
+          <button class="star-btn ${highlight}" onclick="starProject('${docSnap.id}')">⭐ ${p.stars?.length || 0}</button>
+
         </div>
         <div class="comments">
           ${p.comments?.map(c=>`<p><b>${c.user}:</b> ${c.text}</p>`).join('')||''}
