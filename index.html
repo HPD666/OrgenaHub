@@ -117,25 +117,11 @@ let currentUser = null;
 
 // --- Auth ---
 loginBtn.addEventListener('click', async () => {
-  try {
-    const result = await signInWithPopup(auth, provider);
-    currentUser = result.user;
-    updateUI();
-    loadProjects();
-  } catch(e){alert("Login failed: "+e.message);}
+  try { const result = await signInWithPopup(auth, provider); currentUser = result.user; updateUI(); loadProjects(); }
+  catch(e){alert("Login failed: "+e.message);}
 });
-
-logoutBtn.addEventListener('click', async ()=>{
-  await signOut(auth);
-  currentUser=null;
-  updateUI();
-});
-
-onAuthStateChanged(auth,user=>{
-  currentUser=user;
-  updateUI();
-  if(user) loadProjects();
-});
+logoutBtn.addEventListener('click', async ()=>{await signOut(auth); currentUser=null; updateUI();});
+onAuthStateChanged(auth,user=>{currentUser=user; updateUI(); if(user) loadProjects();});
 
 function updateUI(){
   loginBtn.style.display=currentUser?'none':'inline-block';
@@ -154,8 +140,7 @@ postBtn.addEventListener('click', async () => {
   const title = titleInput.value.trim(), code = codeInput.value.trim();
   if(!title || !code) return alert("Fill both fields");
   await addDoc(collection(db,'projects'),{
-    title,
-    code,
+    title, code,
     user: currentUser.displayName,
     userPhoto: currentUser.photoURL || defaultAvatar,
     stars: [],
@@ -180,67 +165,65 @@ window.addComment = async (id,inputElem)=>{
   if(!currentUser) return;
   const text = inputElem.value.trim(); if(!text) return;
   await updateDoc(doc(db,'projects',id),{
-    comments: arrayUnion({user: currentUser.displayName, userPhoto: currentUser.photoURL || defaultAvatar, text})
+    comments: arrayUnion({
+      id: Date.now(),
+      user: currentUser.displayName,
+      userPhoto: currentUser.photoURL || defaultAvatar,
+      text
+    })
   });
   inputElem.value=''; inputElem.focus();
 };
 
 // --- Delete comment ---
-window.deleteComment = async (projectId, comment)=>{
+window.deleteComment = async (projectId, commentId)=>{
   if(!currentUser) return;
   const projSnap = await getDoc(doc(db,'projects',projectId));
+  const comment = projSnap.data().comments.find(c=>c.id==commentId);
+  if(!comment) return;
   if(comment.user!==currentUser.displayName && projSnap.data()?.user!==currentUser.displayName) return alert("Only comment owner or post owner can delete.");
   await updateDoc(doc(db,'projects',projectId),{comments: arrayRemove(comment)});
 };
 
 // --- Edit comment ---
-window.editComment = async (projectId, comment)=>{
-  if(!currentUser || comment.user!==currentUser.displayName) return alert("Only comment owner can edit.");
+window.editComment = async (projectId, commentId)=>{
+  if(!currentUser) return;
+  const projSnap = await getDoc(doc(db,'projects',projectId));
+  const comment = projSnap.data().comments.find(c=>c.id==commentId);
+  if(!comment || comment.user!==currentUser.displayName) return alert("Only comment owner can edit.");
   const newText = prompt("Edit your comment:", comment.text);
   if(!newText) return;
-  await updateDoc(doc(db,'projects',projectId),{
-    comments: arrayRemove(comment)
-  });
-  await updateDoc(doc(db,'projects',projectId),{
-    comments: arrayUnion({user: comment.user, userPhoto: comment.userPhoto, text: newText})
-  });
+  await updateDoc(doc(db,'projects',projectId),{comments: arrayRemove(comment)});
+  await updateDoc(doc(db,'projects',projectId),{comments: arrayUnion({...comment,text:newText})});
 };
 
 // --- Delete project ---
-window.deleteProject = async (id,user)=>{
-  if(!currentUser || currentUser.displayName!==user) return alert("Only owner can delete");
-  if(!confirm("Delete this project?")) return;
-  await deleteDoc(doc(db,'projects',id));
-};
+window.deleteProject = async (id,user)=>{if(!currentUser||currentUser.displayName!==user)return alert("Only owner can delete"); if(!confirm("Delete this project?")) return; await deleteDoc(doc(db,'projects',id));};
 
 // --- Load projects ---
 function loadProjects(){
   const q = query(collection(db,'projects'), orderBy('createdAt','desc'));
-  onSnapshot(q, snapshot=>{
+  onSnapshot(q,snapshot=>{
     projectsContainer.innerHTML=''; userProjects.innerHTML='';
     snapshot.forEach(docSnap=>{
       const p = docSnap.data();
       const div = document.createElement('div'); div.className="project";
-
-      let codePreview = p.code; let isTruncated=false;
+      let codePreview=p.code; let isTruncated=false;
       if(p.code.length>130){codePreview=p.code.slice(0,130)+"..."; isTruncated=true;}
-
-      div.innerHTML = `
+      div.innerHTML=`
         <h3>${p.title} by ${p.user}</h3>
         <pre class="code" id="code-${docSnap.id}">${codePreview}</pre>
         ${isTruncated?`<button class="expand-btn" data-id="${docSnap.id}">+ Expand</button>`:''}
-        <div class="stars">
-          <button class="star-btn ${p.stars?.includes(currentUser?.displayName)?'highlight':''}" data-id="${docSnap.id}">⭐ ${p.stars?.length||0}</button>
-        </div>
+        <div class="stars"><button class="star-btn ${p.stars?.includes(currentUser?.displayName)?'highlight':''}" data-id="${docSnap.id}">⭐ ${p.stars?.length||0}</button></div>
         <div class="comments" id="comments-${docSnap.id}">
           ${p.comments?.map(c=>`
             <div class="comment">
               <p><img src="${c.userPhoto || defaultAvatar}">${c.user}: ${c.text}</p>
               ${(currentUser && (c.user===currentUser.displayName || p.user===currentUser.displayName))?`
-                <div class="comment-actions">
-                  ${c.user===currentUser.displayName?`<button class="edit-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Edit</button>`:''}
-                  <button class="delete-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Delete</button>
-                </div>`:''}
+              <div class="comment-actions">
+                ${c.user===currentUser.displayName?`<button class="edit-btn" data-id="${docSnap.id}" data-cid="${c.id}">Edit</button>`:''}
+                <button class="delete-btn" data-id="${docSnap.id}" data-cid="${c.id}">Delete</button>
+              </div>`:''}
             </div>`).join('')||''}
           ${currentUser?`<input class="comment-input" placeholder="Add comment" id="comment-input-${docSnap.id}">
           <button class="comment-btn" data-id="${docSnap.id}">Comment</button>`:''}
@@ -248,30 +231,21 @@ function loadProjects(){
         ${currentUser&&currentUser.displayName===p.user?`<button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`:''}
       `;
       projectsContainer.appendChild(div);
-
       if(currentUser && currentUser.displayName===p.user){
-        const ud = document.createElement('div'); ud.className="project";
-        ud.innerHTML = `<h4>${p.title}</h4><pre class="code">${p.code}</pre>
+        const ud=document.createElement('div'); ud.className="project";
+        ud.innerHTML=`<h4>${p.title}</h4><pre class="code">${p.code}</pre>
         <button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`;
         userProjects.appendChild(ud);
       }
     });
-
-    document.querySelectorAll('.expand-btn').forEach(btn=>{
-      btn.onclick = ()=>{document.getElementById('code-'+btn.dataset.id).innerText=snapshot.docs.find(d=>d.id===btn.dataset.id).data().code; btn.style.display='none';}
-    });
-    document.querySelectorAll('.star-btn').forEach(btn=>btn.onclick = ()=>toggleStar(btn.dataset.id));
-    document.querySelectorAll('.comment-btn').forEach(btn=>{
-      const inputElem = document.getElementById('comment-input-'+btn.dataset.id);
-      btn.onclick = ()=>addComment(btn.dataset.id,inputElem);
-    });
+    document.querySelectorAll('.expand-btn').forEach(btn=>btn.onclick=()=>{document.getElementById('code-'+btn.dataset.id).innerText=snapshot.docs.find(d=>d.id===btn.dataset.id).data().code; btn.style.display='none';});
+    document.querySelectorAll('.star-btn').forEach(btn=>btn.onclick=()=>toggleStar(btn.dataset.id));
+    document.querySelectorAll('.comment-btn').forEach(btn=>{const inputElem=document.getElementById('comment-input-'+btn.dataset.id); btn.onclick=()=>addComment(btn.dataset.id,inputElem);});
     document.querySelectorAll('.delete-btn').forEach(btn=>{
-      if(btn.innerText==="Delete Post") btn.onclick = ()=>deleteProject(btn.dataset.id,currentUser.displayName);
-      else btn.onclick = ()=>deleteComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text, userPhoto: defaultAvatar});
+      if(btn.innerText==="Delete Post") btn.onclick=()=>deleteProject(btn.dataset.id,currentUser.displayName);
+      else btn.onclick=()=>deleteComment(btn.dataset.id,parseInt(btn.dataset.cid));
     });
-    document.querySelectorAll('.edit-btn').forEach(btn=>{
-      btn.onclick = ()=>editComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text, userPhoto: defaultAvatar});
-    });
+    document.querySelectorAll('.edit-btn').forEach(btn=>btn.onclick=()=>editComment(btn.dataset.id,parseInt(btn.dataset.cid)));
   });
 }
 </script>
