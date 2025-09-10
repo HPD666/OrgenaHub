@@ -35,7 +35,8 @@ input,textarea{width:100%;margin-bottom:10px;padding:8px;border-radius:5px;borde
 button{cursor:pointer;}
 .comment-actions{margin-left:auto;display:flex;gap:5px;}
 .comment{position:relative;background:#f0f0f0;padding:5px 10px;border-radius:5px;width:100%;display:flex;align-items:center;margin-bottom:3px;}
-.comment p{margin:0;flex:1;}
+.comment p{margin:0;flex:1;display:flex;align-items:center;}
+.comment p img{width:30px;height:30px;border-radius:50%;margin-right:8px;}
 .comment-options{cursor:pointer;margin-left:5px;font-weight:bold;color:#555;}
 .comment-options:hover{color:#000;}
 .expand-btn{margin-bottom:5px;align-self:flex-start;}
@@ -79,7 +80,6 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebas
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
-// Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
   authDomain: "orgenahub-7bca3.firebaseapp.com",
@@ -96,21 +96,22 @@ const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
 // DOM
-const loginBtn = document.getElementById('loginBtn');
-const logoutBtn = document.getElementById('logoutBtn');
-const changeUsernameBtn = document.getElementById('changeUsernameBtn');
-const postSection = document.getElementById('post-section');
-const titleInput = document.getElementById('title');
-const codeInput = document.getElementById('code');
-const postBtn = document.getElementById('postBtn');
-const projectsContainer = document.getElementById('projects');
-const profileSection = document.getElementById('profile-section');
-const profileName = document.getElementById('profileName');
-const userProjects = document.getElementById('userProjects');
+const loginBtn=document.getElementById('loginBtn');
+const logoutBtn=document.getElementById('logoutBtn');
+const changeUsernameBtn=document.getElementById('changeUsernameBtn');
+const postSection=document.getElementById('post-section');
+const titleInput=document.getElementById('title');
+const codeInput=document.getElementById('code');
+const postBtn=document.getElementById('postBtn');
+const projectsContainer=document.getElementById('projects');
+const profileSection=document.getElementById('profile-section');
+const profileName=document.getElementById('profileName');
+const userProjects=document.getElementById('userProjects');
 
 let currentUser=null;
 let lastPostTime=0;
 let lastCommentTime=0;
+const defaultAvatar='https://www.gravatar.com/avatar/?d=mp&s=30';
 
 // Auth
 loginBtn.addEventListener('click', async ()=>{
@@ -140,7 +141,7 @@ function updateUI(){
   postSection.style.display=currentUser?'block':'none';
   profileSection.style.display=currentUser?'block':'none';
   if(currentUser){
-    const avatar=currentUser.photoURL||'';
+    const avatar=currentUser.photoURL||defaultAvatar;
     profileName.innerHTML=`<img class="profile-pic" src="${avatar}"> ${currentUser.displayName}`;
   }
 }
@@ -215,7 +216,7 @@ function loadProjects(){
         <div class="comments" id="comments-${docSnap.id}">
           ${p.comments?.map(c=>`
             <div class="comment">
-              <p><img class="profile-pic" src="${currentUser?.photoURL||''}">${c.user}: ${c.text}</p>
+              <p><img src="${defaultAvatar}">${c.user}: ${c.text}</p>
               ${currentUser?`<div class="comment-actions">
                 ${c.user===currentUser.displayName||p.user===currentUser.displayName?`<button class="edit-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Edit</button>
                 <button class="delete-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Delete</button>`:''}
