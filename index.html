@@ -248,68 +248,6 @@ function loadProjects(){
     document.querySelectorAll('.edit-btn').forEach(btn=>btn.onclick=()=>editComment(btn.dataset.id,parseInt(btn.dataset.cid)));
   });
 }
-  // --- Add copy buttons ---
-function addCopyButtons() {
-  document.querySelectorAll('pre.code').forEach(block => {
-    if (block.querySelector('.code-copy-btn')) return;
-
-    const btn = document.createElement('button');
-    btn.className = 'code-copy-btn';
-    btn.textContent = 'Copy';
-    block.appendChild(btn);
-
-    btn.addEventListener('click', async () => {
-      try {
-        // Get the full code from the stored attribute or data attribute
-        const fullCode = block.dataset.fullCode || block.innerText;
-        await navigator.clipboard.writeText(fullCode);
-        btn.textContent = 'Copied!';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = 'Copy';
-          btn.classList.remove('copied');
-        }, 1200);
-      } catch (e) {
-        btn.textContent = 'Error';
-        setTimeout(() => (btn.textContent = 'Copy'), 1200);
-      }
-    });
-  });
-}
-
-// --- When loading projects ---
-snapshot.forEach(docSnap => {
-  const p = docSnap.data();
-  const div = document.createElement('div');
-  div.className = "project";
-
-  let codePreview = p.code;
-  let isTruncated = false;
-  if (p.code.length > 130) {
-    codePreview = p.code.slice(0, 130) + "...";
-    isTruncated = true;
-  }
-
-  div.innerHTML = `
-    <h3>${p.title} by ${p.user}</h3>
-    <pre class="code" id="code-${docSnap.id}" data-full-code="${p.code}">${codePreview}</pre>
-    ${isTruncated ? `<button class="expand-btn" data-id="${docSnap.id}">+ Expand</button>` : ''}
-    ...
-  `;
-
-  projectsContainer.appendChild(div);
-});
-
-// --- Expand button logic ---
-document.querySelectorAll('.expand-btn').forEach(btn => {
-  btn.onclick = () => {
-    const pre = document.getElementById('code-' + btn.dataset.id);
-    const fullCode = pre.dataset.fullCode;
-    pre.innerText = fullCode;
-    btn.style.display = 'none';
-  };
-});
-
 </script>
 </body>
 </html>
