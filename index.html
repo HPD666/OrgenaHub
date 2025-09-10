@@ -28,12 +28,9 @@ main{max-width:1000px;margin:20px auto;padding:0 15px;}
 .comment-btn:hover{background:#1f5f8b;}
 .delete-btn{padding:6px 12px;background:#c0392b;color:white;border:none;border-radius:5px;cursor:pointer;}
 .delete-btn:hover{background:#992d22;}
-.edit-btn{padding:6px 12px;background:#3498db;color:white;border:none;border-radius:5px;cursor:pointer;}
-.edit-btn:hover{background:#217dbb;}
 #post-section, .profile-section{background:white;padding:15px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,0.1);margin-bottom:20px;}
 input,textarea{width:100%;margin-bottom:10px;padding:8px;border-radius:5px;border:1px solid #ccc;}
 button{cursor:pointer;}
-.comment-actions{margin-left:auto;display:flex;gap:5px;}
 .comment{position:relative;background:#f0f0f0;padding:5px 10px;border-radius:5px;width:100%;display:flex;align-items:center;margin-bottom:3px;}
 .comment p{margin:0;flex:1;display:flex;align-items:center;}
 .comment p img{width:30px;height:30px;border-radius:50%;margin-right:8px;}
@@ -43,8 +40,8 @@ body.dark{background-color:#1e1e1e;color:#f5f5f5;}
 body.dark header{background-color:#16a085;}
 body.dark .project{background-color:#2c2c2c;color:#f5f5f5;}
 body.dark .code{background-color:#333;color:#f5f5f5;}
-body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .edit-btn{opacity:0.85;}
-@media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn,.edit-btn{width:100%;margin-top:5px;}}
+body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn{opacity:0.85;}
+@media(max-width:600px){.stars,.comments{flex-direction:column;align-items:stretch;}.comment-btn,.delete-btn{width:100%;margin-top:5px;}}
 </style>
 </head>
 <body>
@@ -56,6 +53,7 @@ body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .e
 <button id="darkModeBtn">Toggle Dark Mode</button>
 </nav>
 </header>
+
 <main>
 <div id="post-section" style="display:none;">
 <h2>Post Your Code</h2>
@@ -63,20 +61,21 @@ body.dark .star-btn, body.dark .comment-btn, body.dark .delete-btn, body.dark .e
 <textarea id="code" rows="6" placeholder="Paste your code here"></textarea>
 <button id="postBtn">Post Project</button>
 </div>
+
 <div class="profile-section" id="profile-section" style="display:none;">
 <h2>Your Profile</h2>
 <div id="profileName"></div>
-<button id="editUsernameBtn" style="margin-top:5px;">Edit Username</button>
 <div id="userProjects"></div>
 </div>
+
 <h2>All Projects</h2>
 <div id="projects"></div>
 </main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp, getDoc, where, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC4haY4VX-vgO03yA6Yj6hvsLw0EZav0Gk",
@@ -103,17 +102,16 @@ const projectsContainer = document.getElementById('projects');
 const profileSection = document.getElementById('profile-section');
 const profileName = document.getElementById('profileName');
 const userProjects = document.getElementById('userProjects');
-const editUsernameBtn = document.getElementById('editUsernameBtn');
-
-let currentUser = null;
+const darkModeBtn = document.getElementById('darkModeBtn');
 const defaultAvatar = 'https://www.gravatar.com/avatar/?d=mp&s=30';
 
-const darkModeBtn = document.getElementById('darkModeBtn');
 if(localStorage.getItem('theme')==='dark') document.body.classList.add('dark');
 darkModeBtn.addEventListener('click', () => {
   document.body.classList.toggle('dark');
   localStorage.setItem('theme', document.body.classList.contains('dark')?'dark':'light');
 });
+
+let currentUser = null;
 
 // --- Auth ---
 loginBtn.addEventListener('click', async () => {
@@ -148,41 +146,20 @@ function updateUI(){
   }
 }
 
-// --- Edit Username ---
-editUsernameBtn.onclick = async ()=>{
-  if(!currentUser) return;
-  const newName = prompt("Enter new username:", currentUser.displayName);
-  if(!newName) return;
-  await updateProfile(currentUser,{displayName:newName});
-  currentUser = auth.currentUser;
-  updateUI();
-
-  // Update all projects
-  const projSnap = await getDocs(collection(db,'projects'));
-  for(const docSnap of projSnap.docs){
-    if(docSnap.data().user===currentUser.displayName) continue;
-    if(docSnap.data().user===currentUser.displayName) await updateDoc(doc(db,'projects',docSnap.id),{user:newName});
-  }
-
-  // Update all comments
-  for(const docSnap of projSnap.docs){
-    const comments = docSnap.data().comments || [];
-    let updated = false;
-    const newComments = comments.map(c=>{
-      if(c.user===currentUser.displayName){updated=true; return {...c,user:newName};} else return c;
-    });
-    if(updated) await updateDoc(doc(db,'projects',docSnap.id),{comments:newComments});
-  }
-
-  loadProjects();
-};
-
-// --- Post Project ---
+// --- Post project ---
 postBtn.addEventListener('click', async () => {
   if(!currentUser) return alert("Login first");
   const title = titleInput.value.trim(), code = codeInput.value.trim();
   if(!title || !code) return alert("Fill both fields");
-  await addDoc(collection(db,'projects'),{title, code, user: currentUser.displayName, stars: [], comments: [], createdAt: serverTimestamp()});
+  await addDoc(collection(db,'projects'),{
+    title,
+    code,
+    user: currentUser.displayName,
+    userPhoto: currentUser.photoURL || defaultAvatar,
+    stars: [],
+    comments: [],
+    createdAt: new Date()
+  });
   titleInput.value=''; codeInput.value='';
 });
 
@@ -200,7 +177,9 @@ window.toggleStar = async id => {
 window.addComment = async (id,inputElem)=>{
   if(!currentUser) return;
   const text = inputElem.value.trim(); if(!text) return;
-  await updateDoc(doc(db,'projects',id),{comments: arrayUnion({user: currentUser.displayName, text, date: serverTimestamp()})});
+  await updateDoc(doc(db,'projects',id),{
+    comments: arrayUnion({user: currentUser.displayName, userPhoto: currentUser.photoURL || defaultAvatar, text})
+  });
   inputElem.value=''; inputElem.focus();
 };
 
@@ -241,10 +220,9 @@ function loadProjects(){
         <div class="comments" id="comments-${docSnap.id}">
           ${p.comments?.map(c=>`
             <div class="comment">
-              <p><img src="${currentUser?.photoURL||defaultAvatar}">${c.user}: ${c.text}</p>
-              ${currentUser?`<div class="comment-actions">
-                ${c.user===currentUser.displayName||p.user===currentUser.displayName?`<button class="edit-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Edit</button>
-                <button class="delete-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Delete</button>`:''}
+              <p><img src="${c.userPhoto || defaultAvatar}">${c.user}: ${c.text}</p>
+              ${(currentUser && (c.user===currentUser.displayName || p.user===currentUser.displayName))?`<div class="comment-actions">
+                <button class="delete-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Delete</button>
               </div>`:''}
             </div>`).join('')||''}
           ${currentUser?`<input class="comment-input" placeholder="Add comment" id="comment-input-${docSnap.id}">
@@ -262,7 +240,6 @@ function loadProjects(){
       }
     });
 
-    // Events
     document.querySelectorAll('.expand-btn').forEach(btn=>{
       btn.onclick = ()=>{document.getElementById('code-'+btn.dataset.id).innerText=snapshot.docs.find(d=>d.id===btn.dataset.id).data().code; btn.style.display='none';}
     });
@@ -271,7 +248,6 @@ function loadProjects(){
       const inputElem = document.getElementById('comment-input-'+btn.dataset.id);
       btn.onclick = ()=>addComment(btn.dataset.id,inputElem);
     });
-    document.querySelectorAll('.edit-btn').forEach(btn=>btn.onclick = ()=>editComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text}));
     document.querySelectorAll('.delete-btn').forEach(btn=>{
       if(btn.innerText==="Delete Post") btn.onclick = ()=>deleteProject(btn.dataset.id,currentUser.displayName);
       else btn.onclick = ()=>deleteComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text});
