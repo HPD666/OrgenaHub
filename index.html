@@ -73,7 +73,27 @@ body.dark .code-copy-btn{background:rgba(0,0,0,0.6); color:#fff;}
 <header>
 <h1>Orgena Hub</h1>
 <nav>
-  <div class="text-center">
+  <style>
+  /* Full-page container */
+  .login {
+    display: flex;                 /* enable Flexbox */
+    justify-content: center;       /* horizontal center */
+    align-items: center;           /* vertical center */
+    height: 100vh;                 /* full viewport height */    
+  }
+
+  /* Style for any button */
+  .login button {
+    padding: 12px 24px;
+    font-size: 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+</style>
+  <div class="login">
 <button id="loginBtn" style="text-align:center;">Login/Register</button>
   </div>
 <button id="logoutBtn" style="display:none;">Logout</button>
