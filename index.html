@@ -93,7 +93,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 const provider = new GoogleAuthProvider();
 
-// DOM elements
+// DOM
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const changeUsernameBtn = document.getElementById('changeUsernameBtn');
@@ -170,7 +170,7 @@ window.toggleStar = async id => {
   else await updateDoc(ref, { stars: arrayUnion(currentUser.displayName) });
 };
 
-// Comments
+// Comment actions
 window.addComment = async (id, inputElem) => {
   if(!currentUser) return;
   const text = inputElem.value.trim(); if(!text) return;
@@ -226,8 +226,7 @@ function loadProjects(){
                 <button class="delete-btn" data-id="${docSnap.id}" data-user="${c.user}" data-text="${c.text}">Delete</button>`:''}
               </div>`:''}
             </div>`).join('')||''}
-          ${currentUser?`<input class="comment-input" placeholder="Add comment" id="comment-input-${docSnap.id}">
-          <button class="comment-btn" data-id="${docSnap.id}">Comment</button>`:''}
+          ${currentUser?`<input class="comment-input" placeholder="Add comment" id="comment-input-${docSnap.id}"><button class="comment-btn" data-id="${docSnap.id}">Comment</button>`:''}
         </div>
         ${currentUser && currentUser.displayName===p.user?`<button class="delete-btn" data-id="${docSnap.id}">Delete Post</button>`:''}
       `;
@@ -240,27 +239,33 @@ function loadProjects(){
         userProjects.appendChild(ud);
       }
     });
-
-    // Attach button events
-    document.querySelectorAll('.expand-btn').forEach(btn => {
-      btn.onclick = () => {
-        const pre = document.getElementById('code-'+btn.dataset.id);
-        const fullText = snapshot.docs.find(d=>d.id===btn.dataset.id).data().code;
-        pre.innerText = fullText; btn.style.display='none';
-      }
-    });
-    document.querySelectorAll('.star-btn').forEach(btn => btn.onclick = ()=>toggleStar(btn.dataset.id));
-    document.querySelectorAll('.comment-btn').forEach(btn => {
-      const inputElem = document.getElementById('comment-input-'+btn.dataset.id);
-      btn.onclick = ()=>addComment(btn.dataset.id, inputElem);
-    });
-    document.querySelectorAll('.edit-btn').forEach(btn => btn.onclick = ()=>editComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text}));
-    document.querySelectorAll('.delete-btn').forEach(btn => {
-      if(btn.innerText==="Delete Post") btn.onclick = ()=>deleteProject(btn.dataset.id,currentUser.displayName);
-      else btn.onclick = ()=>deleteComment(btn.dataset.id,{user:btn.dataset.user,text:btn.dataset.text});
-    });
   });
 }
+
+// Event delegation for dynamic buttons
+projectsContainer.addEventListener('click', e => {
+  const target = e.target;
+  if(target.classList.contains('expand-btn')){
+    const pre = document.getElementById('code-'+target.dataset.id);
+    const fullText = Array.from(projectsContainer.querySelectorAll('.project')).find(d=>d.querySelector(`#code-${target.dataset.id}`))?.querySelector(`#code-${target.dataset.id}`).innerText || '';
+    pre.innerText = fullText;
+    target.style.display = 'none';
+  }
+  else if(target.classList.contains('star-btn')){
+    toggleStar(target.dataset.id);
+  }
+  else if(target.classList.contains('comment-btn')){
+    const inputElem = document.getElementById('comment-input-'+target.dataset.id);
+    addComment(target.dataset.id, inputElem);
+  }
+  else if(target.classList.contains('edit-btn')){
+    editComment(target.dataset.id, {user: target.dataset.user, text: target.dataset.text});
+  }
+  else if(target.classList.contains('delete-btn')){
+    if(target.innerText === "Delete Post") deleteProject(target.dataset.id,currentUser.displayName);
+    else deleteComment(target.dataset.id,{user: target.dataset.user,text: target.dataset.text});
+  }
+});
 
 // Dark Mode
 const darkModeBtn = document.getElementById('darkModeBtn');
