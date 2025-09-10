@@ -1,6 +1,7 @@
 # Orgena Hub
 
-![Orgena Hub Logo](https://i.ibb.co/pBD7sRhB/IMG-0009.jpg![image](https://github.com/user-attachments/assets/8614ce9a-0590-4a88-8beb-d12fe3e30e96)
+![Orgena Hub Logo](https://i.ibb.co/dw1qg62t/IMG-0014.png<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/0477fe1b-764e-4ee4-9881-42479f77c93d" />
+)
 )
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/HPD666/OrgenaHub/actions)
