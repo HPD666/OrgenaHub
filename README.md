@@ -5,7 +5,7 @@
 </p>
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/actions)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/releases)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/releases)
 [![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](LICENSE)
 [![Open Issues](https://img.shields.io/github/issues/HPD666/OrgenaHub?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/issues)
 [![Forks](https://img.shields.io/github/forks/HPD666/OrgenaHub?style=for-the-badge)](https://github.com/HPD666/OrgenaHub/network/members)
